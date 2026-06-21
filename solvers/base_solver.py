@@ -55,8 +55,8 @@ class BaseSolver(ABC):
         total = sum(self.instance.distances[tour[i]][tour[i + 1]] for i in range(len(tour) - 1))
         total += self.instance.distances[tour[-1]][tour[0]]
         return total
-
-    def _greedy_packing(self, tour: list[int] | None) -> list[int]:
+        
+    def _greedy_packing(self, tour = None) -> list[int]:
         n = self.instance.n
 
         if tour is not None:
@@ -65,8 +65,11 @@ class BaseSolver(ABC):
                 remaining[k] = remaining[k + 1] + self.instance.distances[tour[k]][tour[k + 1]]
             city_to_pos = {city: k for k, city in enumerate(tour)}
 
+            city_to_pos = {city: k for k, city in enumerate(tour)}
+
             def score(item):
-                dist = remaining[city_to_pos[item.city]] + 1e-9
+                # in last step, dist=0, avoid div by 0 and take as much as you can  
+                dist = remaining[city_to_pos[item.city]] + 1e-9             
                 return item.profit / (item.weight * dist)
         else:
             def score(item):
