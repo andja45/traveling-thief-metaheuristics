@@ -65,10 +65,11 @@ class ACOSolver(BaseSolver):
             self.n_ants = instance.n  
         self._convergence = []
         self._start_time = time.time()
+        self._stagnation_count = 0  # iterations without improvement
 
         self._update_tau_bounds(self._greedy_tour_cost())
 
-        self.tau = [[self.tau_max] * instance.n for _ in range(instance.n)]
+        self.tau = [[self.tau_max] * instance.n for _ in range(instance.n)] # make all edges equally attractive (initialize to tau_max)
         # eta is heuristic attractiveness of edge - we use item density aware eta 
         self.eta = [[0.0] * instance.n for _ in range(instance.n)]
         for i in range(instance.n):
@@ -97,6 +98,14 @@ class ACOSolver(BaseSolver):
             self._best_score = best_iter_score
             self._best_solution = TTPSolution(tour=best_iter_tour, packing=best_iter_packing)
             self._update_tau_bounds(self._tour_cost(best_iter_tour))
+            self._stagnation_count = 0  # improvement found, reset counter
+        else:
+            self._stagnation_count += 1
+
+        # of no improvement for 100 iterations make all edges equally attractive (tau_max init)
+        if self._stagnation_count >= 100:
+            self.tau = [[self.tau_max] * self.instance.n for _ in range(self.instance.n)]
+            self._stagnation_count = 0
 
         self._convergence.append(self._best_score)
 
