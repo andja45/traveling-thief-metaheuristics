@@ -20,7 +20,7 @@ class TTPEvaluator:
         current_city = solution.tour[0]
 
         for city in solution.tour[1:]:
-            for item in self.instance.items_by_city[current_city]:
+            for item in self.instance.items_by_city.get(current_city, []):
                 if solution.packing[item.id] == 1:
                     weight += item.weight
                     profit += item.profit
@@ -32,7 +32,7 @@ class TTPEvaluator:
             current_city = city
 
         # last city - pickup only
-        for item in self.instance.items_by_city[current_city]:
+        for item in self.instance.items_by_city.get(current_city, []):
             if solution.packing[item.id] == 1:
                 weight += item.weight
                 profit += item.profit
@@ -49,7 +49,7 @@ class TTPEvaluator:
 
         for city in solution.tour[1:]:
             items_picked = []
-            for item in self.instance.items_by_city[current_city]:
+            for item in self.instance.items_by_city.get(current_city, []):
                 if solution.packing[item.id] == 1:
                     weight += item.weight
                     profit += item.profit
@@ -75,7 +75,7 @@ class TTPEvaluator:
             current_city = city
 
         items_picked = []
-        for item in self.instance.items_by_city[current_city]:
+        for item in self.instance.items_by_city.get(current_city, []):
             if solution.packing[item.id] == 1:
                 weight += item.weight
                 profit += item.profit
