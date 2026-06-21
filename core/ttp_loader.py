@@ -41,9 +41,9 @@ def load_instance(filepath: str) -> TTPInstance:
             id, profit, weight, city = line.split()
             items.append(Item(id=int(id)-1, profit=float(profit), weight=float(weight), city=int(city)-1)) # convert to 0-based index
 
-        items_by_city = {}
+        items_by_city = {i: [] for i in range(n)}
         for item in items:
-            items_by_city.setdefault(item.city, []).append(item)
+            items_by_city[item.city].append(item)
         
         distances = [[_distance(cities[i][0], cities[i][1], cities[j][0], cities[j][1], edge_weight_type) for j in range(n)] for i in range(n)]
 

@@ -60,7 +60,7 @@ class BaseSolver(ABC):
 
         return total
         
-    def _greedy_packing(self, tour: None) -> list[int]:
+    def _greedy_packing(self, tour = None) -> list[int]:
         n = self.instance.n
 
         if tour is not None:
@@ -69,28 +69,24 @@ class BaseSolver(ABC):
             for k in range(n - 2, -1, -1):
                 remaining[k] = remaining[k + 1] + self.instance.distances[tour[k]][tour[k + 1]]
 
-            def score(item, pos):
-                dist = remaining[pos] + 1e-9  # in last step, dist=0, avoid div by 0 and take as much as you can
+            city_to_pos = {city: k for k, city in enumerate(tour)}
+
+            def score(item):
+                # in last step, dist=0, avoid div by 0 and take as much as you can  
+                dist = remaining[city_to_pos[item.city]] + 1e-9             
                 return item.profit / (item.weight * dist)
         else:
-            def score(item, pos):
+            def score(item):
                 return item.profit / item.weight
 
-        packing = [0] * self.instance.m
-        weight  = 0.0
-        city_to_pos = {city: k for k, city in enumerate(tour)}
-        
-        sorted_items = sorted(self.instance.items,
-                            key=lambda item: score(item, city_to_pos[item.city]),
-                            reverse=True)
+        sorted_items = sorted(self.instance.items, key=score, reverse=True)
 
-        packing = [0] * self.instance.m  
+        packing = [0] * self.instance.m
         weight = 0.0
-  
-        # pack sorted items until capacity is reached
+
         for item in sorted_items:
             if weight + item.weight <= self.instance.capacity:
-                packing[item.id] = 1  
+                packing[item.id] = 1
                 weight += item.weight
-  
+
         return packing
