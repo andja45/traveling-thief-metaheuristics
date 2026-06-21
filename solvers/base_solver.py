@@ -8,6 +8,13 @@ class BaseSolver(ABC):
         self.on_iteration = on_iteration
         self._best_score = None
         self._best_solution = None
+        self._convergence = []
+
+    def _record(self, score: float, solution):
+        if self._best_score is None or score > self._best_score:
+            self._best_score    = score
+            self._best_solution = solution
+        self._convergence.append(self._best_score)
 
     @abstractmethod
     def _initialize(self, instance):
