@@ -74,9 +74,7 @@ class ACOSolver(BaseSolver):
         for i in range(instance.n):
             for j in range(instance.n):
                 if i != j:
-                    density = sum(item.profit / item.weight 
-                                  for item in instance.items_by_city.get(j, [])) or 1.0
-                    self.eta[i][j] = (1.0 / instance.distances[i][j]) * density
+                    self.eta[i][j] = (1.0 / instance.distances[i][j])
 
     def _iterate(self, i):
         best_iter_score = None
