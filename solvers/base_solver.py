@@ -94,12 +94,14 @@ class BaseSolver(ABC):
         return packing
 
 
+    @staticmethod
     def _mutate_tour(tour: list[int]) -> list[int]:
         new_tour = tour[:]
         a, b = sorted(random.sample(range(len(tour)), 2))
         new_tour[a:b+1] = new_tour[a:b+1][::-1]
         return new_tour
 
+    @staticmethod
     def _mutate_pack(packing: list[int], instance) -> list[int]:
         new_pack = packing[:]
         idx = random.randrange(instance.m)
@@ -110,7 +112,7 @@ class BaseSolver(ABC):
                 new_pack[idx] = 0
         return new_pack
 
-
+    @staticmethod
     def _ox_crossover(tour_a: list[int], tour_b: list[int]) -> list[int]:
         n = len(tour_a)
         start, end = sorted(random.sample(range(n), 2))
@@ -122,11 +124,11 @@ class BaseSolver(ABC):
             child[i] = next(b_iter)
         return child
 
-
+    @staticmethod
     def _uniform_crossover(pack_a: list[int], pack_b: list[int]) -> list[int]:
         return [a if random.random() < 0.5 else b for a, b in zip(pack_a, pack_b)]
 
-
+    @staticmethod
     def _repair_packing(packing: list[int], instance) -> list[int]:
         weight = sum(instance.items[k].weight * packing[k] for k in range(instance.m))
         if weight <= instance.capacity:

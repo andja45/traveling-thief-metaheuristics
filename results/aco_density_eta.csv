@@ -1,0 +1,11 @@
+algo,instance,score,runtime
+ACO,eil51_n50_uncorr_01.ttp,-311.56,19.10
+ACO,eil51_n50_uncorr_01.ttp,206.24,17.72
+ACO,eil51_n50_uncorr_01.ttp,-310.66,17.94
+ACO,eil51_n50_uncorr_01.ttp,-305.79,19.12
+ACO,eil51_n50_uncorr_01.ttp,-255.48,18.52
+ACO,eil51_n50_bounded-strongly-corr_01.ttp,3882.76,18.23
+ACO,eil51_n50_bounded-strongly-corr_01.ttp,4197.02,18.07
+ACO,eil51_n50_bounded-strongly-corr_01.ttp,3937.51,18.93
+ACO,eil51_n50_bounded-strongly-corr_01.ttp,3792.25,16.89
+ACO,eil51_n50_bounded-strongly-corr_01.ttp,3652.72,17.34
