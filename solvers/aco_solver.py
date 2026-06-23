@@ -77,6 +77,35 @@ class ACOSolver(BaseSolver):
                 if i != j:
                     self.eta[i][j] = (1.0 / instance.distances[i][j])
 
+    def _improve_packing(self, tour: list[int], packing: list[int]):
+        score = self.evaluator.evaluate(TTPSolution(tour=tour, packing=packing))
+
+        # sort picked items worst first and unpicked best first by profit/weight ratio
+        picked = sorted([i for i in range(self.instance.m) if packing[i] == 1],
+                          key=lambda i: self.instance.items[i].profit / self.instance.items[i].weight)
+        unpicked = sorted([i for i in range(self.instance.m) if packing[i] == 0],
+                          key=lambda i: self.instance.items[i].profit / self.instance.items[i].weight,
+                          reverse=True)
+
+        weight = sum(self.instance.items[i].weight for i in range(self.instance.m) if packing[i] == 1)
+
+        for drop in picked:
+            for add in unpicked:
+                new_weight = weight - self.instance.items[drop].weight + self.instance.items[add].weight
+                if new_weight > self.instance.capacity:
+                    continue  
+                new_packing = packing[:]
+                new_packing[drop] = 0
+                new_packing[add] = 1
+                new_score = self.evaluator.evaluate(TTPSolution(tour=tour, packing=new_packing))
+                if new_score > score:
+                    packing = new_packing
+                    score = new_score
+                    weight = new_weight
+                    break
+
+        return packing, score
+
     def _iterate(self, i):
         best_iter_score = None
         best_iter_tour = None
@@ -93,10 +122,11 @@ class ACOSolver(BaseSolver):
                 best_iter_tour = tour
                 best_iter_packing = packing
 
-        # update global best
+        # improve only the iteration-best ant's packing before updating global best
+        best_iter_packing, best_iter_score = self._improve_packing(best_iter_tour, best_iter_packing)
+
+        # update global best - check improvement BEFORE _record updates _best_score
         if self._best_score is None or best_iter_score > self._best_score:
-            self._best_score = best_iter_score
-            self._best_solution = TTPSolution(tour=best_iter_tour, packing=best_iter_packing)
             self._update_tau_bounds(self._tour_cost(best_iter_tour))
             self._stagnation_count = 0  # improvement found, reset counter
         else:
@@ -107,7 +137,7 @@ class ACOSolver(BaseSolver):
             self.tau = [[self.tau_max] * self.instance.n for _ in range(self.instance.n)]
             self._stagnation_count = 0
 
-        self._convergence.append(self._best_score)
+        self._record(best_iter_score, TTPSolution(tour=best_iter_tour, packing=best_iter_packing))
 
         # evaporate pheromone on all edges (give less weight to old paths - chance to explore more)
         for i in range(self.instance.n):
