@@ -1,0 +1,435 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+\definecolor{mainblue}{RGB}{0, 51, 102}
+\setbeamercolor{structure}{fg=mainblue}
+
+\title[Putujući lopov]{Putujući lopov}
+\subtitle{Metaheuristički pristupi}
+\author{Anđela Spasić \and Matija Radulović}
+\institute{Matematički fakultet, Univerzitet u Beogradu}
+\date{Jun 2026}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Sadržaj}
+  \tableofcontents
+\end{frame}
+
+% =========================================================
+\section{Problem}
+% =========================================================
+
+\begin{frame}{Putujući lopov (TTP)}
+  \begin{block}{Definicija}
+    Lopov obilazi $n$ gradova tačno jednom i može da uzme predmete koji se
+    nalaze u gradovima. Plaća rentu $R$ po jedinici vremena.
+    Cilj: maksimizovati profit minus rentu.
+  \end{block}
+
+  \bigskip
+  \begin{itemize}
+    \item Kombinacija \textbf{TSP} i \textbf{0/1 ranca} --- oba NP-teška
+    \item Svaki uzeti predmet \emph{usporava} lopova do kraja ture
+    \item \textbf{NP-težak} (Bonyadi, Michalewicz, Barone --- IEEE CEC 2013)
+  \end{itemize}
+
+  \bigskip
+  \begin{alertblock}{Zašto nije trivijalno spajanje}
+    Optimalna tura za TSP $\neq$ optimalna tura za TTP ---
+    problemi se moraju rešavati zajedno.
+  \end{alertblock}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Matematička formulacija}
+
+  \textbf{Brzina} pri tekućoj težini $w$:
+  \[
+    v(w) = v_{\max} - w \cdot \frac{v_{\max} - v_{\min}}{W}
+  \]
+
+  \textbf{Vreme prelaska} između $c_k$ i $c_{k+1}$:
+  \[
+    t_k = \frac{d(c_k,\, c_{k+1})}{v(w_k)}
+  \]
+
+  \textbf{Ciljna funkcija} (maksimizovati):
+  \[
+    f = \sum_{i \in \text{odabrani}} p_i \;-\; R \cdot \sum_{k=1}^{n} t_k
+  \]
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Instance}
+  \begin{center}
+  \begin{tabular}{lrrll}
+    \toprule
+    \textbf{Instanca} & \textbf{$n$} & \textbf{$m$} & \textbf{Tip predmeta} & \textbf{Namena} \\
+    \midrule
+    tiny5  &  5 &  4 & ---                    & brute force provera \\
+    tiny7  &  7 &  6 & ---                    & brute force provera \\
+    tiny9  &  9 &  8 & ---                    & brute force provera \\
+    eil51\_uncorr & 51 & 50 & nekorelisani    & glavna evaluacija \\
+    eil51\_corr   & 51 & 50 & jako korelisani & glavna evaluacija \\
+    pr76\_uncorr  & 76 & 75 & nekorelisani    & veća instanca \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+
+  \medskip
+  {\small Polyakovskiy et al., GECCO 2014}
+\end{frame}
+
+% =========================================================
+\section{Referentna rešenja}
+% =========================================================
+
+\begin{frame}{Brute Force}
+  \begin{itemize}
+    \item Prolazi sve $(n-1)! \times 2^m$ kombinacije ture i pakovanja
+    \item Garantovano optimalno rešenje
+    \item \textbf{Složenost:} $\mathcal{O}\!\left((n-1)!\cdot 2^m\right)$
+  \end{itemize}
+
+  \bigskip
+  \begin{block}{Izvodljivost}
+    \begin{tabular}{lrl}
+      tiny7 ($n=7, m=6$)    & $720 \times 64 = 46\,080$    & \textcolor{green!60!black}{$\checkmark$ izvodljivo} \\
+      eil51 ($n=51, m=50$)  & $50!\times 2^{50}\approx 10^{80}$ & \textcolor{red}{$\times$ nemoguće}
+    \end{tabular}
+  \end{block}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{S5 --- Pohlepna deterministička heuristika}
+  \begin{enumerate}
+    \item Nearest-neighbor tura od grada 0 \hfill $\mathcal{O}(n^2)$
+    \item Pohlepno pakovanje po skoru:
+      \[
+        \text{score}(i) = \frac{p_i}{w_i \cdot \text{preostalo\_rastojanje}(c_i)}
+      \]
+      \hfill $\mathcal{O}(m \log m)$
+    \item Iterativno poboljšanje pakovanja (bit-flip) \hfill $\mathcal{O}(m^2)$
+  \end{enumerate}
+
+  \bigskip
+  \textbf{Ukupna složenost:} $\mathcal{O}(n^2 + m^2)$ \quad --- \quad
+  Donja referentna tačka za sve algoritme.
+\end{frame}
+
+% =========================================================
+\section{Simulirano kaljenje}
+% =========================================================
+
+\begin{frame}{SA --- Simulirano kaljenje}
+  \textbf{Parametri:} 50\,000 iteracija, $T_0 = 500$, $c = 0{,}9995$, $T_{\min} = 1$
+
+  \bigskip
+  \textbf{Potezi po iteraciji:}
+  \begin{itemize}
+    \item 40\% --- 2-opt preokret segmenta ture
+    \item 30\% --- premeštanje jednog grada na drugu poziciju
+    \item 40\% --- bit-flip jednog predmeta u rancu
+  \end{itemize}
+
+  \bigskip
+  \textbf{Bolmanovo prihvatanje lošijeg rešenja:}
+  \[
+    P(\Delta) = e^{\,\Delta / T}, \qquad T \leftarrow c \cdot T
+  \]
+  \medskip
+  \textbf{Složenost:} $\mathcal{O}(T_{\max} \cdot (n + m))$
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{SA Improved}
+  \textbf{Inicijalizacija:} pohlepna tura $\to$ 2-opt $\to$ or-opt $\to$ iterativno pakovanje
+
+  \bigskip
+  \textbf{Auto-kalibracija temperature} (ciljano 80\% prihvatanje na startu):
+  \[
+    T_0 = \frac{-\,\overline{|\Delta|}}{\ln 0{,}8}
+  \]
+
+  \bigskip
+  \textbf{Po iteraciji:}
+  \begin{itemize}
+    \item $n/2$ poteza za turu --- pohlepno prihvatanje (samo poboljšanje)
+    \item $m/2$ flip-ova za ranac --- SA prihvatanje
+  \end{itemize}
+
+  \medskip
+  \textbf{Složenost:} $\mathcal{O}(T_{\max} \cdot (n + m))$
+\end{frame}
+
+% =========================================================
+\section{Mravlja kolonija}
+% =========================================================
+
+\begin{frame}{ACO --- Konstrukcija ture}
+  \begin{tabular}{lll}
+    $n_{\text{ant}} = n$    & broj mrava         & jednak broju gradova \\
+    $\alpha = 1$            & uticaj feromona    & koliko mravi prate već poznate puteve \\
+    $\beta = 2$             & uticaj heuristike  & privlačnost bliskih gradova ($1/d$) \\
+    $\rho = 0{,}02$         & isparavanje        & brzina zaboravljanja starih puteva \\
+    $p_{\text{best}} = 0{,}05$ & ciljana $p$     & koristi se za izračun $\tau_{\min}$ \\
+  \end{tabular}
+
+  \medskip
+  \textbf{Verovatnoća izbora sledećeg grada:}
+  \[
+    P(i \to j) = \frac{\tau(i,j)^\alpha \cdot \eta(i,j)^\beta}
+                       {\displaystyle\sum_{l \notin \text{posećeni}} \tau(i,l)^\alpha \cdot \eta(i,l)^\beta},
+    \qquad \eta(i,j) = \frac{1}{d(i,j)}
+  \]
+
+  \bigskip
+  Svaka mravi gradi kompletnu turu, zatim se pohlepno pakuje ranac.
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{ACO --- MMAS mehanizmi}
+  \textbf{Granice feromona} (Stützle \& Hoos, 2000):
+  \[
+    \tau_{\max} = \frac{1}{\rho \cdot L_{\text{best}}}
+    \quad \text{\small(dodati = uklonjeni feromoni --- stabilno stanje)}
+  \]
+  \[
+    p = p_{\text{best}}^{1/n}
+    \quad \text{\small($p^n = p_{\text{best}}$: verovatnoća biranja iste ivice kroz celu turu)}
+  \]
+  \[
+    \tau_{\min} = \tau_{\max} \cdot \frac{1-p}{(\bar{k}-1)\cdot p},
+    \quad \bar{k} = \tfrac{n}{2}
+    \quad \text{\small(procena neposećenih gradova po koraku)}
+  \]
+  {\small $\tau_{\min}$: vrednost pri kojoj $\tau_{\max}$ ivica pobedi naspram $(\bar{k}-1)$ lošijih}
+
+  \medskip
+  \textbf{Evaporacija i depozit:}
+  \[
+    \tau(a,b) \;\leftarrow\; (1-\rho)\,\tau(a,b) \;+\; \frac{1}{L_{\text{deposit}}}
+  \]
+  {\small $\tau_{\max}$ sprečava dominaciju jednog puta; $\tau_{\min}$ sprečava zanemarivanje puteva}
+
+  \medskip
+  \begin{itemize}
+    \item \textbf{Stagnacija:} reset $\tau \leftarrow \tau_{\max}$ posle 100 iteracija bez poboljšanja
+    \item \textbf{Depozit:} iter-best (prva polovina) $\to$ global-best (druga polovina)
+  \end{itemize}
+
+  \textbf{Složenost:} $\mathcal{O}(\text{iter} \cdot (n^3 + m^2))$
+\end{frame}
+
+% =========================================================
+\section{Genetski algoritam}
+% =========================================================
+
+\begin{frame}{GA --- Osnovna verzija}
+  \textbf{Parametri:} populacija 50, $cr = 0{,}8$, $mr = 0{,}1$, turnir $k=3$, elitizam, 500 generacija
+
+  \bigskip
+  \begin{itemize}
+    \item \textbf{Ukrštanje ture:} OX (order crossover) --- čuva relativni redosled gradova
+    \item \textbf{Ukrštanje ranca:} uniformno, popravka kapaciteta
+    \item \textbf{Mutacija:} 2-opt preokret / bit-flip predmeta
+  \end{itemize}
+
+  \bigskip
+  \textbf{Složenost:} $\mathcal{O}(\text{iter} \cdot \text{pop} \cdot (n + m))$
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{GA Improved}
+  \textbf{Parametri:} populacija 30, $cr = 0{,}85$, $mr = 0{,}15$, steady-state, 1000 iteracija
+
+  \bigskip
+  \begin{itemize}
+    \item \textbf{Ukrštanje:} EAX (edge assembly crossover) ---
+      čuva dobre grane iz oba roditelja kroz AB-cikluse
+    \item \textbf{Po potomku:} 2-opt + or-opt + iterativno pakovanje
+    \item \textbf{Inicijalizacija:} svi jedinke pohlepne ture sa različitim startnim gradovima
+  \end{itemize}
+
+  \bigskip
+  \textbf{Složenost:} $\mathcal{O}(\text{iter} \cdot (n^2 + m^2))$
+\end{frame}
+
+% =========================================================
+\section{Optimizator sivog vuka}
+% =========================================================
+
+\begin{frame}{GWO --- Pomeranje vukova}
+  \textbf{Hijerarhija:} $\alpha$ (best), $\beta$, $\delta$ vode --- omega vukovi se pomeraju ka svakom vodiču zasebno, svaki sa nezavisnim izvlačenjem $r_1$.
+
+  \medskip
+  \textbf{Parametar istraživanja} (opada $2 \to 0$):
+  \[
+    a(t) = 2 - 2\,\frac{t}{T_{\max}}, \qquad
+    |A| = |2\,a\,r_1 - a|, \quad r_1 \sim U(0,1)
+  \]
+
+  \textbf{Pomeranje ture} (ponavlja se ka $\alpha$, $\beta$, $\delta$ redom):
+  \begin{itemize}
+    \item $|A| \geq 1$: visoko $a$, rano u pretrazi --- nasumični 2-opt preokret (istraživanje, ignorisati vodiča)
+    \item $|A| < 1$: nisko $a$, kasno u pretrazi --- primeni swap sekvence ka vodiču (iskorišćavanje):
+      \[
+        n_{\text{swap}} = \lfloor (1 - |A|) \cdot |\text{swaps}| \rfloor
+      \]
+  \end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{GWO --- Ažuriranje ranca}
+  \textbf{Kopiranje bita od svakog vodiča} (nezavisno za $\alpha$, $\beta$, $\delta$):
+  \[
+    \text{copy\_prob} = \max(0,\; 1 - |A|)
+  \]
+  {\small $|A| \to 0$: kopiraj sve od vodiča \quad $|A| \to 1$: ne kopiraj ništa}
+
+  \bigskip
+  \textbf{Glasanje većine trojice vodiča} (bit je 1 ako $\geq 2$ od 3 vodiča kažu 1):
+  \[
+    x_k = \mathbf{1}\!\left[x_k^{(\alpha)} + x_k^{(\beta)} + x_k^{(\delta)} \geq 2\right]
+  \]
+
+  \begin{itemize}
+    \item Glasanje može da prekorači kapacitet --- popravka izbacivanjem najlošijih predmeta
+    \item \textbf{Inicijalizacija:} 90\% nasumično, 10\% perturbovano pohlepno rešenje
+  \end{itemize}
+
+  \medskip
+  \textbf{Parametri:} $n_{\text{wolves}} = n$,\; 500 iteracija \quad
+  \textbf{Složenost:} $\mathcal{O}(\text{iter} \cdot n \cdot (n + m))$
+\end{frame}
+
+% =========================================================
+\section{Rezultati}
+% =========================================================
+
+\begin{frame}{Pregled složenosti}
+  \begin{center}
+  \renewcommand{\arraystretch}{1.4}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Algoritam} & \textbf{Složenost po iteraciji} & \textbf{Ukupna složenost} \\
+    \midrule
+    Brute Force  & ---                            & $\mathcal{O}((n-1)!\cdot 2^m)$ \\
+    S5           & --- (bez iteracija)            & $\mathcal{O}(n^2 + m^2)$ \\
+    SA           & $\mathcal{O}(n + m)$           & $\mathcal{O}(T_{\max}(n+m))$ \\
+    ACO (MMAS)   & $\mathcal{O}(n^3 + m^2)$      & $\mathcal{O}(\text{iter}(n^3+m^2))$ \\
+    GA           & $\mathcal{O}(\text{pop}(n+m))$ & $\mathcal{O}(\text{iter}\cdot\text{pop}(n+m))$ \\
+    GA Improved  & $\mathcal{O}(n^2 + m^2)$      & $\mathcal{O}(\text{iter}(n^2+m^2))$ \\
+    GWO          & $\mathcal{O}(n(n+m))$         & $\mathcal{O}(\text{iter}\cdot n(n+m))$ \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Rezultati --- tiny7 ($n=7, m=6$)}
+  \begin{center}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{lrrrr}
+    \toprule
+    \textbf{Algoritam} & \textbf{Najbolji} & \textbf{Prosek} & \textbf{Najgori} & \textbf{Vreme (s)} \\
+    \midrule
+    Brute Force          & \textbf{115.23} & ---    & ---    & 0.25 \\
+    \midrule
+    S5                   &  65.78 &  65.78 &  65.78 & 0.00 \\
+    GWO                  & 110.40 &  90.44 &  50.54 & 0.03 \\
+    GA Improved          & 101.70 & 101.70 & 101.70 & 0.09 \\
+    GA                   & 110.40 & 109.91 & 108.95 & 0.30 \\
+    SA                   & 115.23 & 111.53 & 108.95 & 0.11 \\
+    ACO (MMAS)           & 115.23 & 115.23 & 115.23 & 0.09 \\
+    \textbf{SA Improved} & \textbf{115.23} & \textbf{115.23} & \textbf{115.23} & 0.42 \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+
+  \smallskip
+  {\footnotesize 3 pokretanja. Optimum (Brute Force) = 115.23.}
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Konvergencija}
+  \begin{center}
+    \textit{[Grafik konvergencije --- eil51\_corr, svi algoritmi]}
+  \end{center}
+
+  \begin{itemize}
+    \item SA --- glatka konvergencija kroz sitne poteze
+    \item ACO --- skokovi vidljivi pri resetovima na stagnaciju
+    \item GA Improved --- brže od GA zahvaljujući EAX i lokalnoj pretrazi
+    \item GWO --- rano stagnira
+  \end{itemize}
+\end{frame}
+
+% =========================================================
+\section{Zaključak}
+% =========================================================
+
+\begin{frame}{Zaključak}
+  \begin{block}{Rangiranje (eil51 i pr76)}
+    \textbf{SA Improved} $>$ SA $>$ ACO $>$ GA Improved $>$ GA $>$ GWO $>$ S5
+  \end{block}
+
+  \bigskip
+  \begin{itemize}
+    \item \textbf{SA:} pretraga jednog rešenja sa sitnim potezima prirodno odgovara TTP-u
+    \item \textbf{ACO:} lokalna pretraga + explore$\to$exploit depozit značajno pomažu
+    \item \textbf{GA Improved:} EAX i lokalna pretraga na potomku nadoknađuju manju populaciju
+    \item \textbf{GWO:} swap sekvence ne uspevaju da uhvate finu strukturu TTP-a
+  \end{itemize}
+
+  \bigskip
+  \textbf{Moguća poboljšanja:} LKH za ture, dinamičko programiranje za ranac pri fiksnoj turi.
+\end{frame}
+
+% ---------------------------------------------------------
+\begin{frame}{Literatura}
+  \footnotesize
+  \begin{itemize}
+    \item Bonyadi, M.R., Michalewicz, Z., Barone, L. (2013).
+      \textit{The Travelling Thief Problem: The First Step in the Transition
+      from Theoretical Problems to Realistic Problems.} IEEE CEC.
+
+    \item Polyakovskiy, S. et al. (2014).
+      \textit{A Comprehensive Benchmark Set and Heuristics for the
+      Traveling Thief Problem.} GECCO.
+
+    \item Stützle, T., Hoos, H.H. (2000).
+      \textit{MAX--MIN Ant System.}
+      Future Generation Computer Systems, 16(8), 889--914.
+
+    \item Mirjalili, S., Mirjalili, S.M., Lewis, A. (2014).
+      \textit{Grey Wolf Optimizer.}
+      Advances in Engineering Software, 69, 46--61.
+
+    \item Kirkpatrick, S., Gelatt, C.D., Vecchi, M.P. (1983).
+      \textit{Optimization by Simulated Annealing.}
+      Science, 220(4598), 671--680.
+
+    \item Nagata, Y., Kobayashi, S. (2013).
+      \textit{A Powerful Genetic Algorithm Using Edge Assembly Crossover
+      for the Traveling Salesman Problem.} INFORMS Journal on Computing.
+  \end{itemize}
+\end{frame}
+
+\end{document}
