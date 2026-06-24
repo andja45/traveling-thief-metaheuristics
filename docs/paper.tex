@@ -335,7 +335,7 @@ GWO je bio originalni pristup koji smo isprobali za TTP. Mirjalili i saradnici \
 
 \subsubsection{Originalni kontinualni GWO}
 
-Sivi vukovi organizovani su u hijerarhiju: $\alpha$ (vođa), $\beta$ (zamenik), $\delta$ (starešine) i $\omega$ (omega---ostatak \v{c}opora). Kandidatna re\v{s}enja su pozicioni vektori u $n$-dimenzionalnom prostoru. Svaki omega vuk a\v{z}urira poziciju privla\v{c}e\'{c}i se prema alpha, beta i delta vukovima:
+Sivi vukovi organizovani su u hijerarhiju: $\alpha$ (vođa), $\beta$ (zamenik), $\delta$ (starešine) i $\omega$ (omega ostatak \v{c}opora). Kandidatna re\v{s}enja su pozicioni vektori u $n$-dimenzionalnom prostoru. Svaki omega vuk a\v{z}urira poziciju privla\v{c}e\'{c}i se prema alpha, beta i delta vukovima:
 \begin{equation}
     \vec{X}(t+1) = \frac{\vec{X}_1 + \vec{X}_2 + \vec{X}_3}{3}
 \end{equation}
@@ -350,8 +350,8 @@ Kada je $|\vec{A}| > 1$, vukovi se disperziraju (globalna pretraga); kada je $|\
 
 Budu\'{c}i da TTP zahteva diskretnu reprezentaciju (rute su permutacije gradova, planovi punjenja su binarne sekvence), originalni GWO ne mo\v{z}e se direktno primeniti. Razvili smo novu diskretnu adaptaciju:
 
-\textbf{Reprezentacija pomaka u prostoru ruta---swap sekvence:}
-Umesto vektora pozicija, predstavljamo "pomak" od jedne rute do druge kao minimalnu sekvencu transpozicija (swap) koja transformi\v{s}e jednu rutu u drugu. Funkcija \texttt{\_swap\_sequence(from\_tour, to\_tour)} gradi ovu sekvencu sledom prolaska kroz pozicije.
+\textbf{Reprezentacija pomaka u prostoru ruta swap sekvence:}
+Umesto vektora pozicija, predstavljamo "pomak" od jedne rute do druge kao minimalnu sekvencu transpozicija (swap) koja transformi\v{s}e jednu rutu u drugu. Funkcija \texttt{\_swap\_sequence(from\_tour, to\_tour)} gradi ovu sekvencu prolaskom kroz pozicije.
 
 \textbf{Primena delimi\v{c}nih swap-ova:}
 Umesto potpune konvergencije prema vo\dj{}i, vuk primenjuje proporcionalni udeo swap sekvence koji kontroli\v{s}e $|A_{\text{mag}}| = |2ar_1 - a|$:
@@ -361,7 +361,7 @@ Umesto potpune konvergencije prema vo\dj{}i, vuk primenjuje proporcionalni udeo 
 \end{itemize}
 Svaki vuk prima nezavisne pomake prema alpha, beta i delta vukovima u sledu.
 
-\textbf{Plan punjenja---glasanje ve\'{c}ine:}
+\textbf{Plan punjenja - glasanje ve\'{c}ine:}
 Za svaki vuk generi\v{s}u se tri plana punjenja (jedan za svaki od tri vo\dj{}e) delimi\v{c}nom kopijom bitova. Finalni plan odre\dj{}en je glasanjem ve\'{c}ine: bit je 1 ako bar 2 od 3 vo\dj{}e imaju 1 na toj poziciji. Nakon glasanja, plan se popravlja ako narušava kapacitet ranca.
 
 \textbf{Inicijalizacija:}
@@ -377,7 +377,7 @@ Za razliku od kontinualnih problema gde GWO funkcioniše izvrsno, primena na kom
 
 \section{Eksperimentalna evaluacija}
 
-\subsection{Eksperimentalni postav}
+\subsection{Eksperimentalna postavka}
 
 Svi algoritmi testirani su na instancama eil51 (nekorelisana i jako korelisana varijanta). Za svaku instancu pokrenuto je 3--5 nezavisnih pokretanja. Parametri algoritama:
 \begin{itemize}
@@ -422,7 +422,7 @@ GWO & 1500 & 650 & 2600 & 430 \\
 
 \textbf{GWO} daje najlo\v{s}ije rezultate od svih algoritama, posebno na nekorelisanoj instanci. Razlozi su vi\v{s}estruki: (1) prevremena konvergencija \v{c}itavog \v{c}opora prema tri vo\dj{}e, (2) delimi\v{c}ne swap sekvence ne garantuju kvalitetne me\dj{}urute, (3) glasanje ve\'{c}ine za plan punjenja gubi individualne TTP-specifi\v{c}ne adaptacije svakog vuka. Visoka standardna devijacija potvr\dj{}uje nestabilnost algoritma. Ovo sugerira da GWO u svom originalnom obliku nije prilagođen za kombinatorne probleme poput TTP-a bez zna\v{c}ajnih modifikacija.
 
-\textbf{Opšti trendovi} konzistentni su s literaturom \cite{wagner_selection}: algoritmi koji eksplicitno rade lokalnu pretragu nad oba podproblema (SA, GAImproved) ostvaruju bolje rezultate nego algoritmi koji zanemaruju jednu od dimenzija. Jako korelisane instance \v{c}esto daju vi\v{s}e vrednosti jer predmeti imaju ve\'{c}e omere profit/te\v{z}ina, ali su te\v{z}e za KP re\v{s}ava\v{c}e.
+\textbf{Opšti trendovi} konzistentni su s literaturom \cite{wagner_selection}: algoritmi koji eksplicitno rade lokalnu pretragu nad oba podproblema (SA, GAImproved) ostvaruju bolje rezultate nego algoritmi koji zanemaruju jednu od dimenzija. Jako korelisane instance \v{c}esto daju vi\v{s}e vrednosti jer predmeti imaju ve\'{c}e faktore profit/te\v{z}ina, ali su te\v{z}e za KP re\v{s}ava\v{c}e.
 
 \subsection{Konvergencija}
 
@@ -435,12 +435,10 @@ U ovom radu prikazali smo matematičku formulaciju Problema putuju\'{c}eg lopova
 Klju\v{c}ni zaklju\v{c}ci:
 \begin{enumerate}
     \item \textbf{Kvalitet inicijalizacije je presudan}: algoritmi koji ulažu u bolje po\v{c}etne ta\v{c}ke (pohlepna ruta + lokalna pretraga) konzistentno nadma\v{s}uju varijante sa nasumi\v{c}nom inicijalizacijom. Ovo je konzistentno s nalazima Faulknera i saradnika \cite{faulkner2015} koji su pokazali da je S5 (strategija ponovnog pokretanja s vi\v{s}e tura) iznenađuju\'{c}e efikasan.
-    \item \textbf{Eksplicitno modelovanje interdependencije}: algoritmi koji istovremeno optimiziraju rutu i plan punjenja (SAImproved, GAImproved) ostvaruju bolje rezultate od onih koji ih tretiraju odvojeno. Ovo potvr\dj{}uje centralnu tezu TTP-a \cite{bonyadi2013,mei2014}.
+    \item \textbf{Zavisno optimizovanje}: algoritmi koji istovremeno optimiziraju rutu i plan punjenja (SAImproved, GAImproved) ostvaruju bolje rezultate od onih koji ih tretiraju odvojeno. Ovo potvr\dj{}uje centralnu tezu TTP-a \cite{bonyadi2013,mei2014}.
     \item \textbf{GWO za TTP zahteva fundamentalne modifikacije}: originalni GWO nije pogodan za kombinatorne prostore. Na\v{s}a diskretna adaptacija (swap sekvence + glasanje ve\'{c}ine) poboljšava primenjivost, ali GWO i dalje zaostaje za specijalizovanijim pristupima. Budu\'{c}a istra\v{z}ivanja mo\v{g}la bi ispitati hibridizaciju GWO-a s PackIterative lokalnom pretragom ili restart strategijama.
-    \item \textbf{Nijedan algoritam nije superioran na svim instancama}: konzistentno sa zaklju\v{c}cima studije algoritamskih portfelja \cite{wagner_selection}, razli\v{c}iti algoritmi pokazuju razli\v{c}ite prednosti za razli\v{c}ite tipove instanci.
+    \item \textbf{Nijedan algoritam nije superioran na svim instancama}: konzistentno sa zaklju\v{c}cima studije algoritamskih paketa \cite{wagner_selection}, razli\v{c}iti algoritmi pokazuju razli\v{c}ite prednosti za razli\v{c}ite tipove instanci.
 \end{enumerate}
-
-Budu\'{c}a istra\v{z}ivanja trebalo bi se fokusirati na: (1) primenu Chained Lin-Kernighan heuristike za generisanje po\v{c}etnih ruta umesto NN algoritma, (2) implementaciju S5 restart strategije kao referentne ta\v{c}ke, (3) ispitivanje GWO s hibridnom lokalnom pretragom i (4) testiranje na ve\'{c}im instancama (rat195, pr439).
 
 \begin{thebibliography}{99}
 
