@@ -106,15 +106,6 @@ class BaseSolver(ABC):
 
     def _pack_iterative(self, tour: list[int], max_passes: int = None,
                         initial_packing: list[int] = None) -> list[int]:
-        """
-        Bit-flip local search on packing. Scans all items, applies each improving
-        flip immediately, repeats until no improvement.
-
-        max_passes=None          → full convergence.
-        max_passes=1             → single pass (MATLS T2=1 style).
-        initial_packing=None     → start from empty packing.
-        initial_packing=<list>   → warm-start from a given packing (e.g. greedy).
-        """
         if initial_packing is not None:
             packing = list(initial_packing)
             current_weight = sum(self.instance.items[k].weight * packing[k]
@@ -196,6 +187,7 @@ class BaseSolver(ABC):
         new_tour[a:b+1] = new_tour[a:b+1][::-1]
         return new_tour
 
+    @staticmethod
     @staticmethod
     def _mutate_pack(packing: list[int], instance) -> list[int]:
         new_pack = packing[:]

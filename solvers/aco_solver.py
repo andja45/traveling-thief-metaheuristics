@@ -24,8 +24,7 @@ class ACOSolver(BaseSolver):
     def _build_tour(self) -> list[int]:
         n = self.instance.n
 
-        # each ant starts from a different city
-        start = random.randint(0, n - 1)
+        start = 0
         tour = [start]
         visited = [False] * n
         visited[start] = True
@@ -64,6 +63,7 @@ class ACOSolver(BaseSolver):
         if self.n_ants is None:
             self.n_ants = instance.n  
         self._convergence = []
+        self.tau_history  = []  # snapshot of tau after each iteration, used for pheromone animation
         self._start_time = time.time()
         self._stagnation_count = 0  # iterations without improvement
 
@@ -124,9 +124,9 @@ class ACOSolver(BaseSolver):
 
         # improve only the iteration-best ant's packing before updating global best
         best_iter_packing, best_iter_score = self._improve_packing(best_iter_tour, best_iter_packing)
-
-        # update global best - check improvement BEFORE _record updates _best_score
-        if self._best_score is None or best_iter_score > self._best_score:
+        
+        improved = self._best_score is None or best_iter_score > self._best_score
+        if improved:
             self._update_tau_bounds(self._tour_cost(best_iter_tour))
             self._stagnation_count = 0  # improvement found, reset counter
         else:
@@ -159,6 +159,10 @@ class ACOSolver(BaseSolver):
                     self.tau[i][j] = self.tau_max # prevents one path from dominating
                 elif self.tau[i][j] < self.tau_min:
                     self.tau[i][j] = self.tau_min # prevents paths from being ignored
+
+        # snapshot tau only when a new best is found 
+        if improved:
+            self.tau_history.append([row[:] for row in self.tau])
 
     def _finalize(self) -> SolverResult:
         return SolverResult(
