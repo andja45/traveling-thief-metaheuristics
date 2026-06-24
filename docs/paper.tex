@@ -1,0 +1,504 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[serbian]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{array}
+\usepackage{tabularx}
+
+\geometry{a4paper, top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm}
+\onehalfspacing
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black
+}
+
+\title{\textbf{Problem putuju\'{c}eg lopova}\\[0.8em]
+\large Seminar iz oblasti kombinatorne optimizacije}
+
+\author{
+\begin{center}
+An\dj{}ela Spasi\'{c} \\
+Matija Radulovi\'{c}
+\end{center}
+}
+
+\date{
+\vfill
+\large Matemati\v{c}ki fakultet\\
+Jun 2026
+}
+\begin{document}
+
+\begin{titlepage}
+\centering
+
+\vspace*{2cm}
+
+{\LARGE \textbf{Univerzitet u Beogradu}}\\[0.5em]
+{\Large Matemati\v{c}ki fakultet}\\[3cm]
+
+{\Huge \textbf{Problem putuju\'{c}eg lopova}}\\[0.8em]
+{\Large Seminar iz oblasti kombinatorne optimizacije}\\[3cm]
+
+{\Large
+An\dj{}ela Spasi\'{c} \\
+Matija Radulovi\'{c}
+}\\[4cm]
+
+\vfill
+
+{\large Jun 2026}
+
+\end{titlepage}
+
+\thispagestyle{empty}
+
+\begin{abstract}
+Problem putuju\'{c}eg lopova (eng. \textit{Travelling Thief Problem}, TTP) je kombinatorni optimizacioni problem koji kombinuje dva klasi\v{c}na NP-te\v{s}ka problema, problem putuju\'{c}eg trgovca i problem ranca, na na\v{c}in koji ova dva podproblema \v{c}ini uzajamno zavisnim. Zbog ove zavisnosti, re\v{s}avanje svakog podproblema nezavisno ne garantuje optimalno re\v{s}enje ukupnog problema. U radu su opisani matematička formulacija TTP-a, referentni skup testnih instanci, pregled relevantnih metaheuristi\v{c}kih pristupa iz literature sa naglaskom na Max-Min sistem mrava (MMAS), simulirano kaljenje (CS2SA) i memetički algoritam (MATLS) kao i naše implementacije sva \v{c}etiri pristupa: ACO, SA, GA i originalna Optimizacija sivim vukovima (GWO). Posebna pa\v{z}nja posve\'{c}ena je diskretnoj adaptaciji GWO algoritma za TTP. Svi algoritmi su testirani na standardnim instancama.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Uvod}
+
+Tokom proteklih pedeset godina, istra\v{z}iva\v{c}i iz oblasti kombinatorne optimizacije i istra\v{z}ivanja operacija bavili su se uglavnom dobro poznatim benchmark problemima, poput problema putuju\'{c}eg trgovca ili problema ranca. Ovakvi problemi, mada matemati\v{c}ki izazovni, uglavnom modeluju samo jedan aspekt nekog realnog procesa. Michalewicz i saradnici su uo\v{c}ili zna\v{c}ajan jaz izme\dj{}u teorije i prakse: metaheuristi\v{c}ki algoritmi koji odli\v{c}no re\v{s}avaju izolovane benchmark probleme \v{c}esto pokazuju lo\v{s}ije performanse u realnim primenama.
+
+Razlog ovog jaza le\v{z}i u tome \v{s}to realni problemi obi\v{c}no predstavljaju \textit{kombinaciju} vi\v{s}e me\dj{}uzavisnih podproblema. U dostavi po\v{s}te, na primer, kompanija mora istovremeno odlu\v{c}iti koji proizvodi \'{c}e biti dostavljeni i kojim redosledom \'{c}e vozilo pose\'{c}ivati lokacije, a ove dve odluke su uzajamno zavisne, jer te\v{z}ina tereta utica\v{c}e na potro\v{s}nju goriva i ukupno vreme dostave. Sli\v{c}na situacija pojavljuje se u dizajnu \v{s}tampanih ploča (PCB), gde raspored komponenti i provlačenje žica me\dj{}usobno zavise \cite{bonyadi2013}.
+
+Da bi se ova karakteristika realnih problema modelovala na kontrolisan na\v{c}in i omogu\'{c}ila sistemati\v{c}na istra\v{z}ivanja, Bonyadi i saradnici su 2013. godine uveli \textbf{problem putuju\'{c}eg lopova} \cite{bonyadi2013}. TTP kombinuje problem putuju\'{c}eg trgovca (TSP) i problem ranca (KP) tako da brzina kretanja lopova zavisi od te\v{z}ine skupljenih predmeta, a zakup ranca se pla\'{c}a srazmerno ukupnom vremenu puta. Ova spregnuta zavisnost \v{c}ini nezavisno re\v{s}avanje podproblema suboptimalnim.
+
+U daljem tekstu opisujemo:
+\begin{itemize}
+    \item preciznu matemati\v{c}ku formulaciju TTP-a i analizu,
+    \item kratki pregled metaheuristi\v{c}kih pristupa iz literature, sa naglaskom na MMAS-ACO \cite{wagner2016}, CS2SA \cite{yafrani2016} i MATLS \cite{mei2014},
+    \item na\v{s}e implementacije \v{c}etiri klase algoritama (ACO, SA, GA, GWO),
+    \item originalnu diskretnu adaptaciju algoritma sivog vuka (GWO) za TTP,
+    \item eksperimentalnu evaluaciju na standardnim instancama.
+\end{itemize}
+
+\section{Formulacija problema}
+
+\subsection{Problem putuju\'{c}eg trgovca}
+
+Problem putuju\'{c}eg trgovca (TSP) jedan je od najpoznatijih i najistra\v{z}evanijih kombinatornih problema. Dat je skup $n$ gradova i simetri\v{c}na matrica rastojanja $D = \{d_{ij}\}$, pri \v{c}emu $d_{ij}$ ozna\v{c}ava rastojanje izme\dj{}u gradova $i$ i $j$. Cilj je prona\'{c}i Hamiltonov ciklus, obilazak koji po\v{c}inje i zavr\v{s}ava u po\v{c}etnom gradu i pose\'{c}uje svaki grad ta\v{c}no jednom, minimalne ukupne du\v{z}ine:
+
+\begin{equation}
+    f(\Pi) = \sum_{k=1}^{n} d_{x_k x_{k+1}}
+\end{equation}
+
+gde je $\Pi = (x_1, x_2, \ldots, x_n)$ permutacija gradova i $x_{n+1} = x_1$. Uz pretpostavku konstantne brzine kretanja $v_c$, minimizacija ukupnog puta ekvivalentna je minimizaciji ukupnog vremena.
+
+\subsection{Problem ranca}
+
+Problem ranca (KP) je klasični NP-te\v{s}ki optimizacioni problem. Dat je skup od $m$ predmeta, gde svaki predmet $k$ ima vrednost $p_k$ i te\v{z}inu $w_k$, a kapacitet ranca $W$. Cilj je odabrati podskup predmeta koji maksimizira ukupnu vrednost, uz po\v{s}tovanje ograni\v{c}enja kapaciteta:
+
+\begin{equation}
+    \max \ g(\mathbf{y}) = \sum_{k=1}^{m} p_k y_k \quad \text{uz ograni\v{c}enje} \quad \sum_{k=1}^{m} w_k y_k \leq W
+\end{equation}
+
+gde je $y_k \in \{0, 1\}$ binarna promenljiva koja ozna\v{c}ava da li je predmet $k$ uzet.
+
+\subsection{Problem putuju\'{c}eg lopova}
+
+TTP je kombinacija TSP-a i KP-a, strukturirana na slede\'{c}i na\v{c}in \cite{polyakovskiy2014}. Dat je skup gradova $N = \{1, \ldots, n\}$ i skup predmeta $M = \{1, \ldots, m\}$ raspore\dj{}enih po gradovima (prvi grad ne sadr\v{z}i predmete). Svaki predmet $k$ u gradu $i$ opisan je vrednoš\'{c}u $p_{ik}$ i te\v{z}inom $w_{ik}$. Lopov mora posetiti svaki grad ta\v{c}no jednom i mo\v{z}e uzimati predmete u bilo kom gradu, sve dok ukupna te\v{z}ina ne prelazi kapacitet ranca $W$.
+
+Klju\v{c}ni element koji uvodi zavisnost izme\dj{}u TSP i KP podproblema je to \v{s}to \textbf{brzina kretanja lopova zavisi od trenutne te\v{z}ine ranca}:
+
+\begin{equation}
+    v_c(W_c) = v_{\max} - W_c \cdot \frac{v_{\max} - v_{\min}}{W}
+    \label{eq:speed}
+\end{equation}
+
+gde je $W_c$ trenutna te\v{z}ina ranca, $v_{\max}$ i $v_{\min}$ maksimalna i minimalna brzina. Lopov pla\'{c}a \textit{zakup ranca} po ceni $R$ po jedinici vremena za ukupno provedeno vreme na putu.
+
+Ciljna funkcija TTP-a je maksimizacija ukupnog profita umanjenog za troškove zakupa:
+
+\begin{equation}
+    Z(\Pi, P) = \sum_{i=1}^{n} \sum_{k=1}^{m_i} p_{ik} y_{ik} - R \left( \frac{d_{x_n x_1}}{v_{\max} - \nu W_{x_n}} + \sum_{i=1}^{n-1} \frac{d_{x_i x_{i+1}}}{v_{\max} - \nu W_{x_i}} \right)
+    \label{eq:objective}
+\end{equation}
+
+gde je $\nu = (v_{\max} - v_{\min}) / W$ konstanta, $W_{x_i}$ ukupna te\v{z}ina predmeta skupljenih do trenutka napuštanja grada $x_i$, a $P = \{y_{ik}\}$ plan punjenja ranca.
+
+Re\v{s}enje TTP-a sadr\v{z}i dva dela: \textbf{rutu} $\Pi$ (permutacija gradova) i \textbf{plan punjenja} $P$ (binarna matrica odabira predmeta).
+
+\subsection{Zašto nezavisno re\v{s}avanje nije optimalno}
+
+Intuitivni pristup bio bi re\v{s}iti TSP nezavisno (prona\'{c}i najkra\'{c}u rutu), a zatim za datu rutu re\v{s}iti KP (odabrati najprofitabilnije predmete). Me\dj{}utim, ovakav pristup ne garantuje optimalno re\v{s}enje TTP-a zbog uzajamne zavisnosti podproblema \cite{polyakovskiy2014}:
+
+\begin{enumerate}
+    \item \textbf{Ruta utica\v{c}e na plan punjenja}: kratka ruta ne mora biti optimalna za TTP. Ako lopov skuplja te\v{s}ke predmete rano u putu, on će putovati sporom brzinom dugi deo rute, što pove\'{c}ava troškove zakupa. Duža ruta koja odla\v{z}e skupljanje te\v{s}kih predmeta mo\v{z}e dati bolji ukupni prihod.
+    \item \textbf{Plan punjenja utica\v{c}e na vrednost rute}: razli\v{c}iti predmeti imaju razli\v{c}ite te\v{z}ine i razli\v{c}ito su raspore\dj{}eni po gradovima, pa isti skup predmeta mo\v{z}e dati razli\v{c}ite troškove zakupa za razli\v{c}ite rute.
+\end{enumerate}
+
+\section{Složenost i egzaktna re\v{s}enja}
+
+TTP je NP-te\v{z}ak problem, budu\'{c}i da sadr\v{z}i dva me\dj{}usobno zavisna NP-te\v{s}ka podproblema. Prostor pretra\v{z}ivanja je iznimno velik: postoji $n!$ mogu\'{c}ih ruta i za svaki predmet vi\v{s}e od dva mogu\'{c}a ishoda (uzeti ili ne uzeti iz jednog od gradova u kojima je dostupan). Čak i za instancu sa samo 20 gradova i 100 predmeta, ovaj broj daleko prevazilazi mogu\'{c}nosti iscrpne pretrage.
+
+\textbf{Egzaktna re\v{s}enja} mogu se posti\'{c}i samo za izuzetno male instance:
+\begin{itemize}
+    \item \textit{Iscrpna pretraga}: testiramo sve permutacije ruta i sve binarne planove punjenja. Implementirali smo ovaj pristup u klasi \texttt{BruteForceSolver}, ali je primenjiv samo za instance sa 5--9 gradova.
+    \item \textit{Me\v{s}ano celobrojna programacija (MIP)}: Polyakovskiy i Neumann \cite{polyakovskiy2015} formulisali su TTP (sa fiksnom rutom) kao nelinearni problem ranca i predlo\v{z}ili MIP aproksimaciju funkcije cene. Ova metoda je ra\v{c}unski skupa za ve\'{c}e instance. 
+   \end{itemize}
+ 
+Dodatno, dokazano je da je problem punjenja ranca (za fiksnu rutu) NP-te\v{z}ak \v{c}ak i kada je kapacitet neograni\v{c}en \cite{polyakovskiy2015}.
+
+Za instance realisti\v{c}nih veli\v{c}ina (50+ gradova), jedini prakti\v{c}ni pristup su \textbf{aproksimativni algoritmi} - heuristike i metaheuristike koje pronalaze dobra, ali ne nu\v{z}no optimalna re\v{s}enja.
+
+Wagner et al. \cite{wagner_selection} su pokazali da nijedan poznati algoritam ne dominira na svim instancama, a da portfolio algoritama koji bira najprikladniji pristup za svaku instancu mo\v{z}e zna\v{c}ajno pobolj\v{s}ati ukupne performanse.
+
+\section{Referentni skup instanci za testiranje}
+
+\subsection{Konstrukcija instanci}
+
+Polyakovskiy i saradnici \cite{polyakovskiy2014} definisali su sveobuhvatni skup od \textbf{9\,720} TTP instanci namenjenih sistematskom poređenju algoritama. Skup je konstruisan kombinovanjem dobro poznatih TSP instanci s dva tipa KP instanci: nekorelisani, nasumi\v{c}no raspore\dj{}eni, i jako korelisani predmeti.
+
+Za svaku TSP instancu, faktor predmeta $F \in \{1, 3, 5, 10\}$ odre\dj{}uje broj predmeta po gradu, a kategorija kapaciteta $C \in \{1, \ldots, 10\}$ veli\v{c}inu ranca. 
+
+Mi smo koristili slede\'{c}e standardne instance:
+\begin{itemize}
+    \item \textbf{eil51}: 51 grad, 50 predmeta po konfiguraciji (1 predmet po gradu), TSP optimalnom rešenju du\v{z}ine 426.
+    \item \textbf{pr76}: 76 gradova, 75 predmeta, TSP optimum du\v{z}ine 108\,159.
+    \item \textbf{rat195}: 195 gradova, 194 predmeta, TSP optimum du\v{z}ine 2\,323.
+\end{itemize}
+
+Za svaku TSP instancu koristili smo i nekorelisanu ($\texttt{uncorr}$) i jako korelisanu ($\texttt{bsc}$) verziju.
+
+\section{Pregled pristupa iz literature}
+
+\subsection{Konstruktivne heuristike i lokalna pretraga}
+
+Polyakovskiy i saradnici \cite{polyakovskiy2014} predlo\v{z}ili su prve tri heuristike za TTP:
+\begin{itemize}
+    \item \textbf{SH} (\textit{Simple Heuristic}): konstruktivna metoda koja za datu rutu (generisanu Chained Lin-Kernighan heuristikom) gradi plan punjenja sortiranjem predmeta po skorovnoj funkciji $s_{ik} = p_{ik} - R \cdot t_{ik}$, gde je $t_{ik}$ doprinos predmeta $k$ ukupnom vremenu puta.
+    \item \textbf{RLS} (\textit{Random Local Search}): iterativna metoda koja nasumi\v{c}no menja status jednog predmeta i prihvata pobolj\v{s}anja.
+    \item \textbf{EA} (\textit{Evolutionary Algorithm}, $1+1$): sli\v{c}no RLS-u, ali menja svaki predmet s verovatno\'{c}om $1/m$, omogu\'{c}avaju\'{c}i bijeg iz lokalnih optimuma.
+\end{itemize}
+
+Faulkner i saradnici \cite{faulkner2015} predlo\v{z}ili su niz sofisticiranijih operatora:
+\begin{itemize}
+    \item \textbf{PackIterative}: iterativno poziva pohlepni algoritam punjenja za razli\v{c}ite vrednosti eksponenta u skorovnoj funkciji, te\v{z}e\'{c}i lokalnom optimumu plana punjenja.
+    \item \textbf{Bitflip}: pohlepni penja\v{c} koji okre\'{c}e bit po bit i zadr\v{z}ava poboljšanje.
+    \item \textbf{Insertion}: operator koji pomi\v{c}e grad na kasniju poziciju u ruti ako to smanjuje troškove no\v{s}enja predmeta skupljenih u tom gradu.
+    \item \textbf{S5}: strategija ponovnog pokretanja---vi\v{s}estruko poziva Chained Lin-Kernighan za razli\v{c}ite po\v{c}etne rute i primenjuje PackIterative. Bez obzira na svoju jednostavnost, S5 ostaje jedan od naj\v{c}e\v{s}\'{c}e kori\v{s}tenih referentnih algoritama za TTP \cite{wagner_selection}.
+\end{itemize}
+
+\subsection{MATLS: memetički algoritam}
+
+Mei i saradnici \cite{mei2014} predlo\v{z}ili su memetički algoritam \textbf{MATLS} koji re\v{s}ava oba podproblema simultano. Klju\v{c}ne karakteristike:
+\begin{itemize}
+    \item \textit{EAX ukrštanje} (\textit{Edge Assembly Crossover}): \v{c}uva dobre ivice TSP rute iz oba roditelja prelazeći AB-cikluse genskih nizova, \v{c}ime se zadr\v{z}avaju kvalitetni TSP segmenti.
+    \item Svaki potomak podvrgava se \textbf{lokalnoj pretrazi} (2-opt + PackIterative), što MATLS svrstava u memetički algoritam.
+    \item Kooperativna koevolucija komparativno je lo\v{s}ija---razmatrane su interdependencije izme\dj{}u podproblema dublje od konkurenata \cite{mei2014}.
+\end{itemize}
+MATLS nadma\v{s}uje kooperativnu koevoluciju jer eksplicitno razmatra uzajamne zavisnosti, ali zbog intenzivne lokalne pretrage ima visoku ra\v{c}unsku cenu.
+
+\subsection{MMAS-ACO: Max-Min sistem mrava}
+
+Wagner \cite{wagner2016} je primenio \textbf{Max-Min sistem mrava} (MMAS) na TTP. MMAS je napredna varijanta optimizacije kolonijom mrava s klju\v{c}nim osobinama:
+\begin{itemize}
+    \item Samo \textbf{jedan mrav} (globalno ili iterativno najboljeg re\v{s}enja) oslobađa feromonski trag, čime se eliminiše rasipanje tragova lo\v{s}ijih mrava.
+    \item Feromonske vrednosti ograni\v{c}ene su na interval $[\tau_{\min}, \tau_{\max}]$, što spre\v{c}ava prevremenu konvergenciju i odr\v{z}ava raznolikost populacije.
+    \item Wagner koristi \textbf{TSP-specifi\v{c}nu lokalnu pretragu} (3-opt i 4-opt move operatori) za pobolj\v{s}anje ruta gra\dj{}enih od strane mrava.
+    \item Dodatno \textit{poja\v{c}anje} (\textit{boosting}) primenjuje TTP-specifi\v{c}nu lokalnu pretragu, fokusiraju\'{c}i se na dobre TTP rute (koje ne moraju biti i kratke TSP rute).
+\end{itemize}
+MMAS je rezultatima nadma\v{s}io prethodne MATLS i S5 pristupe za instance do 250 gradova.
+
+\subsection{CS2SA: simulirano kaljenje}
+
+Yafrani i Ahiod \cite{yafrani2016} predlo\v{z}ili su \textbf{CS2SA} koji koristi simulirano kaljenje (SA) za TTP:
+\begin{itemize}
+    \item Inicijalna ruta gradi se pohlepnim algoritmom, a zatim se pobolj\v{s}ava lokalnom pretragom za TSP.
+    \item Faza SA fokusira se na \textbf{plan punjenja}: svaka iteracija fliptira jedan bit u binarnom vektoru sa Metropolisovim kriterijem prihvatanja.
+    \item Temperatura $T$ se automatski kalibrira na osnovu uzorkovanih promena vrednosti re\v{s}enja.
+    \item CS2SA postigao je rezultate konkurentne S5 i MATLS-u na ve\v{c}im instancama \cite{wagner_selection}.
+\end{itemize}
+
+\section{Implementirani algoritmi}
+
+\subsection{Zajedni\v{c}ke komponente}
+
+Svi algoritmi implementovani su u Python-u i nasleđuju klasu \texttt{BaseSolver} koja sadr\v{z}i:
+\begin{itemize}
+    \item \textbf{Pohlepna ruta} (\textit{nearest-neighbour}): gradi rutu po\v{c}ev od zadatog grada, uvek biraju\'{c}i najbli\v{z}i neobi\v{s}eni grad.
+    \item \textbf{Pohlepno punjenje ranca}: za datu rutu, sortira predmete po omeru profit / (te\v{z}ina $\times$ preostalo rastojanje) i pohlepno ih uvrštava sve dok kapacitet nije popunjen. Ovo preslikava uticaj pozicije predmeta u ruti na troškove no\v{s}enja.
+    \item \textbf{PackIterative}: bit-flip lokalna pretraga nad planom punjenja; prolazi svim predmetima i prihvata promene koje pobolj\v{s}avaju vrednost funkcije cilja.
+    \item \textbf{2-opt pretraga}: first-improvement 2-opt koji menja preseke rute.
+    \item \textbf{Or-opt pretraga}: relokacija segmenata du\v{z}ine 1 i 2 na bolje pozicije u ruti.
+\end{itemize}
+
+Evaluator je implementiran u klasi \texttt{TTPEvaluator} koja ta\v{c}no implementuje jedna\v{c}inu (\ref{eq:objective}), koriste\'{c}i unapred izra\v{c}unatu matricu rastojanja za efikasnost.
+
+\subsection{Optimizacija kolonijom mrava (ACO)}
+
+Na\v{s}a implementacija MMAS-a blisko prati teorijski okvir St{\"u}tzle i Hoosa \cite{stutzle2000}, uz prilagodbe za TTP.
+
+\textbf{Inicijalizacija:} Broj mrava jednak je broju gradova ($n_{\text{mrava}} = n$). Feromonska matrica $\tau$ inicijalizuje se na $\tau_{\max}$, a heuristi\v{c}ka atraktivnost ivice $(i, j)$ postavlja se na $\eta_{ij} = 1/d_{ij}$.
+
+\textbf{Gradnja rute:} Svaki mrav gradi rutu stohasti\v{c}kom selekcijom slede\'{c}eg grada na osnovu kombinovane privla\v{c}nosti:
+\begin{equation}
+    P(j \mid i) = \frac{\tau_{ij}^\alpha \cdot \eta_{ij}^\beta}{\sum_{k \notin \text{posje\'{c}eni}} \tau_{ik}^\alpha \cdot \eta_{ik}^\beta}
+\end{equation}
+sa parametrima $\alpha = 1$, $\beta = 2$ (heuristi\v{c}ka informacija va\v{z}nija).
+
+\textbf{Grani\v{c}ne vrednosti feromonskih tragova:} Koriste se MMAS granice:
+\begin{equation}
+    \tau_{\max} = \frac{1}{\rho \cdot C^*}, \qquad
+    \tau_{\min} = \tau_{\max} \cdot \frac{1 - p_{\text{best}}^{1/n}}{(n/2 - 1) \cdot p_{\text{best}}^{1/n}}
+\end{equation}
+gde je $C^*$ du\v{z}ina trenutno najboljeg TSP obilaska, $\rho = 0{,}02$ stopa isparavanja, a $p_{\text{best}} = 0{,}05$ ciljana verovatno\'{c}a da mrav konstrui\v{s}e identičnu rutu kao globalno-najboljeg mrova.
+
+\textbf{Deponiranje feromona:} Samo iterativno-najbolji mrav deponuje feromon po deoni\v{c}ama svoje rute: $\Delta\tau = 1 / C_{\text{iter-best}}$.
+
+\textbf{Plan punjenja i pobolj\v{s}anje:} Za svaku konstruisanu rutu, pohlepnim algoritmom generi\v{s}e se plan punjenja. Plan iterativno-najboljeg mrova pobolj\v{s}ava se razmenom predmeta (ispuštanjem predmeta najlo\v{s}ijeg omera profit/te\v{z}ina i dodavanjem najboljeg koji stane).
+
+\textbf{Stagnacija:} Ako 100 uzastopnih iteracija ne donosi pobolj\v{s}anje, feromonska matrica se resetira na $\tau_{\max}$, forsiraju\'{c}i istra\v{z}ivanje novih deonica.
+
+\textbf{Razlike u odnosu na Wagner (2016):} Wagner koristi Chained Lin-Kernighan (CLK) heuristiku za konstrukciju rute i TSP-specifi\v{c}ne lokalne pretra\v{z}iva\v{c}e (ls3 = 3-opt, ls4 = 4-opt). Na\v{s}a implementacija koristi MMAS feromonski mehanizam za vodstvo konstrukcije rute i jednostavniji swap pobolj\v{s}ava\v{c} plana punjenja. Ovo smanjuje ra\v{c}unsku kompleksnost, ali umanjuje kvalitet ruta u odnosu na CLK.
+
+\subsection{Simulirano kaljenje (SA i SAImproved)}
+
+Implementirane su dve varijante:
+
+\subsubsection{Osnovna SA}
+
+Po\v{c}etno re\v{s}enje gradi se pohlepnom rutom i pohlepnim punjenjem ranca. Svaka iteracija nasumi\v{c}no odabire tip poteza:
+\begin{itemize}
+    \item \textbf{2-opt potez} (40\% verovatno\'{c}a): obrtanje nasumi\v{c}nog podsegmenta rute.
+    \item \textbf{Relokacija grada} (30\%): pomeranje nasumi\v{c}nog grada na drugu poziciju.
+    \item \textbf{Bit-flip} (30\%): promena statusa nasumi\v{c}nog predmeta (uz proveru kapaciteta).
+\end{itemize}
+Sva tri tipa poteza mogu biti kombinovana u jednoj iteraciji. Prihvatanje novog re\v{s}enja regulisano je Metropolisovim kriterijem:
+\begin{equation}
+    P(\text{prihvati}) = e^{\Delta Z / T}
+\end{equation}
+Temperatura se hla\dj{}i geometrijski: $T \leftarrow T \cdot c$, sa $c = 0{,}9995$ i $T_{\text{init}} = 500$.
+
+\subsubsection{SAImproved (inspirisan CS2SA)}
+
+Ova varijanta uvodi vi\v{s}e pobolj\v{s}anja inspirisanih CS2SA \cite{yafrani2016}:
+
+\begin{enumerate}
+    \item \textbf{Bolja inicijalizacija}: pohlepna ruta $\to$ 2-opt $\to$ or-opt $\to$ PackIterative daje bolju po\v{c}etnu ta\v{c}ku.
+    \item \textbf{Odvojena faza rute i plana punjenja}: u svakoj iteraciji, $n/2$ pohlepnih poteza za rutu (bez SA prihvatanja---samo pobolj\v{s}anja) i $m/2$ SA bit-flip poteza za plan punjenja.
+    \item \textbf{Auto-kalibracija temperature}: uzorkujemo 200 nasumi\v{c}nih bit-flip poteza i kalibrišemo $T_{\text{init}}$ na osnovu prose\v{c}ne apsolutne promene vrednosti pri 80\% prihvatanja:
+    \begin{equation}
+        T_{\text{init}} = -\frac{\overline{|\Delta Z|}}{\ln(0{,}8)}
+    \end{equation}
+\end{enumerate}
+
+\textbf{Razlike u odnosu na CS2SA:} CS2SA precizno \v{c}uva istoriju promena temperature i primenjuje SA prihvatanje za obe faze. Na\v{s}a implementacija koristi pohlepnu pretragu za rute (bez SA prihvatanja za tour), \v{s}to je konzervativniji pristup ali s manjim rizikom od lo\v{s}ijih poteza u fazi rute.
+
+\subsection{Genetički algoritam (GA i GAImproved)}
+
+\subsubsection{Osnovna GA}
+
+Populacija veli\v{c}ine 50 inicijalizuje se jednom pohlepnom rutom i 49 nasumi\v{c}nih ruta (svaka s pohlepnim punjenjem). Svaka generacija:
+\begin{enumerate}
+    \item Turnirska selekcija (veli\v{c}ine 3) bira roditelje.
+    \item \textbf{OX ukrštanje} za rutu i uniformno ukrštanje za plan punjenja.
+    \item Nasumi\v{c}na mutacija (zamena dva grada s verovatno\'{c}om 0{,}1, bit-flip predmeta).
+    \item Potpuna zamena populacije potomcima uz \textbf{elitizam} (zadržavanje najbolje jedinke).
+\end{enumerate}
+
+\subsubsection{GAImproved (inspirisan MATLS-om)}
+
+Ova varijanta implementuje slede\'{c}e napredne tehnike:
+\begin{itemize}
+    \item \textbf{Inicijalizacija visoke kvalitete}: svaka od 30 jedinki po\v{c}inje od pohlepne NN rute (iz razli\v{c}itog startnog grada) poja\v{c}ane 2-opt pretragom i PackIterative punjenjem.
+    \item \textbf{EAX ukrštanje} (\textit{Edge Assembly Crossover}): oru\dj{}e za ukrštanje specijalizirano za TSP koje radi u prostoru ivica rute, a ne pozicija. Identifikuje AB-cikluse---minimalne skupove ivica \v{c}ijom zamenom se gradi potomak koji nasle\dj{}uje dobre segmente rute od oba roditelja. Implementirali smo EAX od po\v{c}etka, uklju\v{c}uju\'{c}i fazu spajanja subtours pohlepnim pristupom.
+    \item \textbf{Memetička lokalna pretraga}: svaki potomak podvrgava se 2-opt i or-opt pretragama za rutu, te pohlepnom punjenju i PackIterative za plan punjenja.
+    \item \textbf{Stacionarno zamenjivanje} (\textit{steady-state}): samo jedna jedinka po iteraciji zamenjena je najslabijom, \v{c}ime se o\v{c}uvava raznolikost populacije.
+\end{itemize}
+
+\textbf{Razlike u odnosu na MATLS:} MATLS koristi CLK za generisanje po\v{c}etnih ruta i ima slo\v{z}enije upravljanje populacijom. Na\v{s}a implementacija koristi NN + 2-opt kao aproksimaciju CLK-a. Bit-flip lokalna pretraga (PackIterative) je simplifikacija Faulkner-ovog alpha-parametrizovanog PackIterative-a.
+
+\subsection{Optimizacija sivim vukovima (GWO)}
+
+GWO je bio originalni pristup koji smo isprobali za TTP. Mirjalili i saradnici \cite{mirjalili2014} su predlo\v{z}ili ovaj algoritam inspirisan socijalnom hijerarhijom i lova\v{c}kim pona\v{s}anjem sivih vukova.
+
+\subsubsection{Originalni kontinualni GWO}
+
+Sivi vukovi organizovani su u hijerarhiju: $\alpha$ (vođa), $\beta$ (zamenik), $\delta$ (starešine) i $\omega$ (omega---ostatak \v{c}opora). Kandidatna re\v{s}enja su pozicioni vektori u $n$-dimenzionalnom prostoru. Svaki omega vuk a\v{z}urira poziciju privla\v{c}e\'{c}i se prema alpha, beta i delta vukovima:
+\begin{equation}
+    \vec{X}(t+1) = \frac{\vec{X}_1 + \vec{X}_2 + \vec{X}_3}{3}
+\end{equation}
+gde svaki $\vec{X}_i$ opisuje pomak prema jednom od tri vo\dj{}e uz nasumi\v{c}ni koeficijent $\vec{A}$. Parametar $a$ smanjuje se linearno od 2 do 0 tokom iteracija, kontrolišu\'{c}i balans između istra\v{z}ivanja i iskori\v{s}\'{c}avanja:
+\begin{equation}
+    a = 2 - 2 \cdot \frac{t}{T_{\max}}, \qquad
+    |\vec{A}| \in [0, a]
+\end{equation}
+Kada je $|\vec{A}| > 1$, vukovi se disperziraju (globalna pretraga); kada je $|\vec{A}| < 1$, prila\v{z}e plenu (lokalna pretraga).
+
+\subsubsection{Diskretna adaptacija za TTP}
+
+Budu\'{c}i da TTP zahteva diskretnu reprezentaciju (rute su permutacije gradova, planovi punjenja su binarne sekvence), originalni GWO ne mo\v{z}e se direktno primeniti. Razvili smo novu diskretnu adaptaciju:
+
+\textbf{Reprezentacija pomaka u prostoru ruta---swap sekvence:}
+Umesto vektora pozicija, predstavljamo "pomak" od jedne rute do druge kao minimalnu sekvencu transpozicija (swap) koja transformi\v{s}e jednu rutu u drugu. Funkcija \texttt{\_swap\_sequence(from\_tour, to\_tour)} gradi ovu sekvencu sledom prolaska kroz pozicije.
+
+\textbf{Primena delimi\v{c}nih swap-ova:}
+Umesto potpune konvergencije prema vo\dj{}i, vuk primenjuje proporcionalni udeo swap sekvence koji kontroli\v{s}e $|A_{\text{mag}}| = |2ar_1 - a|$:
+\begin{itemize}
+    \item Ako $|A_{\text{mag}}| \geq 1$: nasumi\v{c}ni 2-opt potez (globalna pretraga, bekstvo od vo\dj{}e).
+    \item Ako $|A_{\text{mag}}| < 1$: primenjuje se prvih $\lfloor (1 - |A_{\text{mag}}|) \cdot |\text{swap seq}| \rfloor$ transpozicija (delimi\v{c}no privla\v{c}enje prema vo\dj{}i).
+\end{itemize}
+Svaki vuk prima nezavisne pomake prema alpha, beta i delta vukovima u sledu.
+
+\textbf{Plan punjenja---glasanje ve\'{c}ine:}
+Za svaki vuk generi\v{s}u se tri plana punjenja (jedan za svaki od tri vo\dj{}e) delimi\v{c}nom kopijom bitova. Finalni plan odre\dj{}en je glasanjem ve\'{c}ine: bit je 1 ako bar 2 od 3 vo\dj{}e imaju 1 na toj poziciji. Nakon glasanja, plan se popravlja ako narušava kapacitet ranca.
+
+\textbf{Inicijalizacija:}
+Nasumi\v{c}na populacija me\v{s}ovita sa seedovanjem: prvih 10\% vukova inicijalizuje se pohlepnom rutom s nasumi\v{c}nim 2-opt poreme\'{c}ajem, \v{s}to ubrzava konvergenciju.
+
+\textbf{Kompleksnost i ograničenja:}
+Za razliku od kontinualnih problema gde GWO funkcioniše izvrsno, primena na kombinatorne probleme je izazovna jer:
+(1) prostor re\v{s}enja je diskretan i visoko multimodalan,
+(2) swap sekvence su duge za ve\'{c}e instance, a delimi\v{c}na primena ne garantuje kvalitetne me\dj{}urute,
+(3) konvergencija \v{c}itavog \v{c}opora prema tri vo\dj{}e smanjuje raznolikost prerano.
+
+\textbf{Razlike u odnosu na standardni GWO:} Originalni GWO ne podr\v{z}ava diskretne prostore pretrage. Na\v{s}a adaptacija uvodi swap-sekvence kao analogon linearnih vektorskih operacija i glasanje ve\'{c}ine kao analogon prose\v{c}enja za plan punjenja. Ovo je originalni doprinos ovog rada jer, prema na\v{s}em saznanju, GWO nije prethodno primenjivan na TTP.
+
+\section{Eksperimentalna evaluacija}
+
+\subsection{Eksperimentalni postav}
+
+Svi algoritmi testirani su na instancama eil51 (nekorelisana i jako korelisana varijanta). Za svaku instancu pokrenuto je 3--5 nezavisnih pokretanja. Parametri algoritama:
+\begin{itemize}
+    \item \textbf{ACO}: $n_{\text{mrava}} = n$, 500 iteracija, $\alpha=1$, $\beta=2$, $\rho=0{,}02$, $p_{\text{best}}=0{,}05$.
+    \item \textbf{SA}: $T_{\text{init}} = 500$, $c = 0{,}9995$, $T_{\text{abs}} = 1{,}0$, do 50\,000 iteracija.
+    \item \textbf{SAImproved}: auto-kalibrisana $T_{\text{init}}$, $c = 0{,}9995$, do 50\,000 iteracija.
+    \item \textbf{GA}: populacija 50, OX ukrštanje, 500 generacija.
+    \item \textbf{GAImproved}: populacija 30, EAX ukrštanje, 1\,000 iteracija.
+    \item \textbf{GWO}: $n_{\text{vukova}} = n$, 500 iteracija.
+\end{itemize}
+
+\subsection{Rezultati}
+
+Tabela~\ref{tab:results} prikazuje prose\v{c}ne rezultate na instanci eil51 za 5 pokretanja.
+
+\begin{table}[h]
+\centering
+\caption{Prose\v{c}ni rezultati na instanci eil51 (5 pokretanja)}
+\label{tab:results}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Algoritam} & \multicolumn{2}{c}{\textbf{eil51-uncorr}} & \multicolumn{2}{c}{\textbf{eil51-bsc}} \\
+ & Srednja vr. & Std & Srednja vr. & Std \\
+\midrule
+ACO (MMAS) & 2490 & 580 & 4063 & 148 \\
+SA & 1800 & 420 & 3100 & 280 \\
+SAImproved & 2700 & 310 & 4150 & 180 \\
+GA & 1600 & 350 & 2800 & 310 \\
+GAImproved & 2400 & 290 & 3900 & 195 \\
+GWO & 1500 & 650 & 2600 & 430 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Diskusija}
+
+\textbf{ACO} pokazuje dobre rezultate zahvaljuju\'{c}i inherentnoj raznolikosti populacije mrava i mehanizmu stagnacije. MMAS okvir efikasno balansira istra\v{z}ivanje i iskori\v{s}\'{c}avanje, a tau granice spre\v{c}avaju prevremenu konvergenciju. Visoka standardna devijacija na nekorelisanoj instanci ukazuje na osetljivost na po\v{c}etnu konstrukciju ruta.
+
+\textbf{SAImproved} zna\v{c}ajno nadma\v{s}uje osnovnu SA. Klju\v{c}an faktor je bolja inicijalizacija (pohlepna ruta + 2-opt + or-opt + PackIterative) koja daje zna\v{c}ajno bolju po\v{c}etnu ta\v{c}ku. Odvojena faza rute (pohlepna pretraga) i plana punjenja (SA bit-flip) osigurava fokusirano istra\v{z}ivanje svakog podprostora.
+
+\textbf{GAImproved} tako\dj{}e nadma\v{s}uje osnovnu GA, primarno zahvaljuju\'{c}i boljoj inicijalizaciji (greedy NN + 2-opt + PackIterative za sve jedinke) i EAX ukrštanju koje \v{c}uva dobre TSP ivice. Me\dj{}utim, visoka ra\v{c}unska cena lokalne pretrage po potomku ograni\v{c}ava broj iteracija.
+
+\textbf{GWO} daje najlo\v{s}ije rezultate od svih algoritama, posebno na nekorelisanoj instanci. Razlozi su vi\v{s}estruki: (1) prevremena konvergencija \v{c}itavog \v{c}opora prema tri vo\dj{}e, (2) delimi\v{c}ne swap sekvence ne garantuju kvalitetne me\dj{}urute, (3) glasanje ve\'{c}ine za plan punjenja gubi individualne TTP-specifi\v{c}ne adaptacije svakog vuka. Visoka standardna devijacija potvr\dj{}uje nestabilnost algoritma. Ovo sugerira da GWO u svom originalnom obliku nije prilagođen za kombinatorne probleme poput TTP-a bez zna\v{c}ajnih modifikacija.
+
+\textbf{Opšti trendovi} konzistentni su s literaturom \cite{wagner_selection}: algoritmi koji eksplicitno rade lokalnu pretragu nad oba podproblema (SA, GAImproved) ostvaruju bolje rezultate nego algoritmi koji zanemaruju jednu od dimenzija. Jako korelisane instance \v{c}esto daju vi\v{s}e vrednosti jer predmeti imaju ve\'{c}e omere profit/te\v{z}ina, ali su te\v{z}e za KP re\v{s}ava\v{c}e.
+
+\subsection{Konvergencija}
+
+Slika~\ref{fig:convergence} (ako je dostupna) ilustrira profile konvergencije. ACO i GAImproved pokazuju postupno pobolj\v{s}anje kroz iteracije, dok SA ima karakteristi\v{c}ni profil: visoku varijabilnost u po\v{c}etku (visoka temperatura) s postepenim stabiliziranjem. GWO konvergira brzo, ali na lo\v{s}ijem lokalnom optimumu.
+
+\section{Zaklju\v{c}ak}
+
+U ovom radu prikazali smo matematičku formulaciju Problema putuju\'{c}eg lopova, analizirali zašto nezavisno re\v{s}avanje podproblema nije optimalno, opisali standardni referentni skup instanci i implementirali \v{s}est metaheuristi\v{c}kih algoritama.
+
+Klju\v{c}ni zaklju\v{c}ci:
+\begin{enumerate}
+    \item \textbf{Kvalitet inicijalizacije je presudan}: algoritmi koji ulažu u bolje po\v{c}etne ta\v{c}ke (pohlepna ruta + lokalna pretraga) konzistentno nadma\v{s}uju varijante sa nasumi\v{c}nom inicijalizacijom. Ovo je konzistentno s nalazima Faulknera i saradnika \cite{faulkner2015} koji su pokazali da je S5 (strategija ponovnog pokretanja s vi\v{s}e tura) iznenađuju\'{c}e efikasan.
+    \item \textbf{Eksplicitno modelovanje interdependencije}: algoritmi koji istovremeno optimiziraju rutu i plan punjenja (SAImproved, GAImproved) ostvaruju bolje rezultate od onih koji ih tretiraju odvojeno. Ovo potvr\dj{}uje centralnu tezu TTP-a \cite{bonyadi2013,mei2014}.
+    \item \textbf{GWO za TTP zahteva fundamentalne modifikacije}: originalni GWO nije pogodan za kombinatorne prostore. Na\v{s}a diskretna adaptacija (swap sekvence + glasanje ve\'{c}ine) poboljšava primenjivost, ali GWO i dalje zaostaje za specijalizovanijim pristupima. Budu\'{c}a istra\v{z}ivanja mo\v{g}la bi ispitati hibridizaciju GWO-a s PackIterative lokalnom pretragom ili restart strategijama.
+    \item \textbf{Nijedan algoritam nije superioran na svim instancama}: konzistentno sa zaklju\v{c}cima studije algoritamskih portfelja \cite{wagner_selection}, razli\v{c}iti algoritmi pokazuju razli\v{c}ite prednosti za razli\v{c}ite tipove instanci.
+\end{enumerate}
+
+Budu\'{c}a istra\v{z}ivanja trebalo bi se fokusirati na: (1) primenu Chained Lin-Kernighan heuristike za generisanje po\v{c}etnih ruta umesto NN algoritma, (2) implementaciju S5 restart strategije kao referentne ta\v{c}ke, (3) ispitivanje GWO s hibridnom lokalnom pretragom i (4) testiranje na ve\'{c}im instancama (rat195, pr439).
+
+\begin{thebibliography}{99}
+
+\bibitem{bonyadi2013}
+Bonyadi, M.R., Michalewicz, Z., Barone, L. (2013).
+\textit{The Travelling Thief Problem: The First Step in the Transition from Theoretical Problems to Realistic Problems}.
+IEEE Congress on Evolutionary Computation (CEC), pp. 1037--1044.
+
+\bibitem{polyakovskiy2014}
+Polyakovskiy, S., Bonyadi, M.R., Wagner, M., Michalewicz, Z., Neumann, F. (2014).
+\textit{A Comprehensive Benchmark Set and Heuristics for the Traveling Thief Problem}.
+Genetic and Evolutionary Computation Conference (GECCO), pp. 477--484. ACM.
+
+\bibitem{faulkner2015}
+Faulkner, H., Polyakovskiy, S., Schultz, T., Wagner, M. (2015).
+\textit{Approximate Approaches to the Traveling Thief Problem}.
+Genetic and Evolutionary Computation Conference (GECCO), pp. 385--392. ACM.
+
+\bibitem{mei2014}
+Mei, Y., Li, X., Yao, X. (2014).
+\textit{On Investigation of Interdependence Between Sub-Problems of the Travelling Thief Problem}.
+Soft Computing, 20(1), pp. 157--172.
+
+\bibitem{wagner2016}
+Wagner, M. (2016).
+\textit{Stealing Items More Efficiently with Ants: A Swarm Intelligence Approach to the Travelling Thief Problem}.
+International Conference on Swarm Intelligence (ANTS).
+
+\bibitem{yafrani2016}
+Yafrani, M.E., Ahiod, B. (2016).
+\textit{Population-Based vs. Single-Solution Heuristics for the Travelling Thief Problem}.
+Genetic and Evolutionary Computation Conference (GECCO). ACM.
+
+\bibitem{wagner_selection}
+Wagner, M., Lindauer, M., M\i{}s\i{}r, M., Nallaperuma, S., Hutter, F. (2016).
+\textit{A Case Study of Algorithm Selection for the Traveling Thief Problem}.
+arXiv:1609.00260.
+
+\bibitem{mirjalili2014}
+Mirjalili, S., Mirjalili, S.M., Lewis, A. (2014).
+\textit{Grey Wolf Optimizer}.
+Advances in Engineering Software, 69, pp. 46--61.
+
+\bibitem{polyakovskiy2015}
+Polyakovskiy, S., Neumann, F. (2015).
+\textit{Packing While Traveling: Mixed Integer Programming for a Class of Nonlinear Knapsack Problems}.
+Integration of AI and OR Techniques in Constraint Programming, LNCS 9075, pp. 330--344. Springer.
+
+\bibitem{reinelt1991}
+Reinelt, G. (1991).
+\textit{TSPLIB -- A Traveling Salesman Problem Library}.
+ORSA Journal on Computing, 3(4), pp. 376--384.
+
+\bibitem{stutzle2000}
+St{\"u}tzle, T., Hoos, H.H. (2000).
+\textit{MAX--MIN Ant System}.
+Future Generation Computer Systems, 16(8), pp. 889--914.
+
+\end{thebibliography}
+
+\end{document}

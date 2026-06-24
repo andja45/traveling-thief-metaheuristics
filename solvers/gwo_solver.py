@@ -57,10 +57,12 @@ class GWOSolver(BaseSolver):
         # builds the minimal list of (i,j) swaps that transforms from_tour into to_tour
         swaps = []
         temp = from_tour[:]
+        pos = {city: idx for idx, city in enumerate(temp)}  # city -> current index, O(n)
         for i in range(len(temp)):
             if temp[i] != to_tour[i]:
-                j = temp.index(to_tour[i], i) # find where the target city currently sits
+                j = pos[to_tour[i]]  
                 swaps.append((i, j))
+                pos[temp[i]], pos[temp[j]] = j, i
                 temp[i], temp[j] = temp[j], temp[i]
         return swaps
 
