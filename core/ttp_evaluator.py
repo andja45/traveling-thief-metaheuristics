@@ -13,6 +13,7 @@ class TTPEvaluator:
     def _objective(self, profit: float, total_time: float) -> float:
         return profit - self.instance.renting_rate * total_time
 
+    # normalize tour to start from city 0 (crossovers and mutations may change this)
     def _normalize_tour(self, tour: list[int]) -> list[int]:
         idx = tour.index(0)
         return tour[idx:] + tour[:idx]
@@ -48,6 +49,7 @@ class TTPEvaluator:
 
         return self._objective(profit, total_time)
 
+    # only for final solutions, animation and plot need this info
     def evaluate_traced(self, solution: TTPSolution) -> tuple[float, list[dict]]:
         weight = 0.0
         total_time = 0.0

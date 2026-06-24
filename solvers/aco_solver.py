@@ -12,14 +12,15 @@ class ACOSolver(BaseSolver):
         self.alpha = alpha # pheromone influence
         self.beta = beta # heuristic influence
         self.rho = rho # evaporation rate
-        self.p_best = p_best # prob of constructing best tour (taking a step towards it)
+        self.p_best = p_best # prob of reconstructing the best tour 
 
     def _update_tau_bounds(self, best_tour_cost: float):
         self.tau_max = 1.0 / (self.rho * best_tour_cost) # pheromone added 1/greedy_cost = pheromone removed rho * tau - stable here
 
         p = self.p_best ** (1.0 / self.instance.n) # probabilty of taking the same road - p^n = pbest
         avg = self.instance.n / 2 # estimate of unvisited cities per step
-        self.tau_min = self.tau_max * (1 - p) / ((avg - 1) * p) # p = tau_min / (tau_min + (avg-1) * tau_max) prob of picking underexplored edge
+        self.tau_min = self.tau_max * (1 - p) / ((avg - 1) * p) # p = tau_max / (tau_max + (avg-1) * tau_min) prob of picking best edge against (avg-1) worse ones 
+        # ^ what value should tau_min have so tau_max edge gets picked
 
     def _build_tour(self) -> list[int]:
         n = self.instance.n
@@ -77,36 +78,7 @@ class ACOSolver(BaseSolver):
                 if i != j:
                     self.eta[i][j] = (1.0 / instance.distances[i][j])
 
-    def _improve_packing(self, tour: list[int], packing: list[int]):
-        score = self.evaluator.evaluate(TTPSolution(tour=tour, packing=packing))
-
-        # sort picked items worst first and unpicked best first by profit/weight ratio
-        picked = sorted([i for i in range(self.instance.m) if packing[i] == 1],
-                          key=lambda i: self.instance.items[i].profit / self.instance.items[i].weight)
-        unpicked = sorted([i for i in range(self.instance.m) if packing[i] == 0],
-                          key=lambda i: self.instance.items[i].profit / self.instance.items[i].weight,
-                          reverse=True)
-
-        weight = sum(self.instance.items[i].weight for i in range(self.instance.m) if packing[i] == 1)
-
-        for drop in picked:
-            for add in unpicked:
-                new_weight = weight - self.instance.items[drop].weight + self.instance.items[add].weight
-                if new_weight > self.instance.capacity:
-                    continue  
-                new_packing = packing[:]
-                new_packing[drop] = 0
-                new_packing[add] = 1
-                new_score = self.evaluator.evaluate(TTPSolution(tour=tour, packing=new_packing))
-                if new_score > score:
-                    packing = new_packing
-                    score = new_score
-                    weight = new_weight
-                    break
-
-        return packing, score
-
-    def _iterate(self, i):
+    def _iterate(self, iteration):
         best_iter_score = None
         best_iter_tour = None
         best_iter_packing = None
@@ -122,8 +94,10 @@ class ACOSolver(BaseSolver):
                 best_iter_tour = tour
                 best_iter_packing = packing
 
-        # improve only the iteration-best ant's packing before updating global best
-        best_iter_packing, best_iter_score = self._improve_packing(best_iter_tour, best_iter_packing)
+        # 2-opt on tour, then iterative bit-flip packing, all applied to iteration-best only
+        best_iter_tour = self._two_opt_full(best_iter_tour, best_iter_packing, max_passes=1)
+        best_iter_packing = self._pack_iterative(best_iter_tour, max_passes=3, initial_packing=best_iter_packing)
+        best_iter_score = self.evaluator.evaluate(TTPSolution(tour=best_iter_tour, packing=best_iter_packing))
         
         improved = self._best_score is None or best_iter_score > self._best_score
         if improved:
@@ -140,25 +114,30 @@ class ACOSolver(BaseSolver):
         self._record(best_iter_score, TTPSolution(tour=best_iter_tour, packing=best_iter_packing))
 
         # evaporate pheromone on all edges (give less weight to old paths - chance to explore more)
-        for i in range(self.instance.n):
-            for j in range(self.instance.n):
-                self.tau[i][j] *= (1.0 - self.rho)
+        for a in range(self.instance.n):
+            for b in range(self.instance.n):
+                self.tau[a][b] *= (1.0 - self.rho)
 
         # in MMAS only the best ant deposits pheromone (reinforce best path)
-        best_tour = self._best_solution.tour
-        deposit = 1.0 / self._tour_cost(best_tour) # shortest the tour higher the pheromone
+        # best_tour = self._best_solution.tour
+        # deposit = 1.0 / self._tour_cost(best_tour) # shortest the tour higher the pheromone
+
+        # early iterations: deposit from iteration-best (explore broadly)
+        # late iterations: deposit from global best (converge on best known)
+        deposit_tour = best_iter_tour if iteration < self.max_iterations // 2 else self._best_solution.tour
+        deposit = 1.0 / self._tour_cost(deposit_tour)
 
         for k in range(self.instance.n):
-            i = best_tour[k]
-            j = best_tour[(k + 1) % self.instance.n]
-            self.tau[i][j] += deposit # tau is not symetric
+            a = deposit_tour[k]
+            b = deposit_tour[(k + 1) % self.instance.n]
+            self.tau[a][b] += deposit # tau is not symetric
 
-        for i in range(self.instance.n):
-            for j in range(self.instance.n):
-                if self.tau[i][j] > self.tau_max:
-                    self.tau[i][j] = self.tau_max # prevents one path from dominating
-                elif self.tau[i][j] < self.tau_min:
-                    self.tau[i][j] = self.tau_min # prevents paths from being ignored
+        for a in range(self.instance.n):
+            for b in range(self.instance.n):
+                if self.tau[a][b] > self.tau_max:
+                    self.tau[a][b] = self.tau_max # prevents one path from dominating
+                elif self.tau[a][b] < self.tau_min:
+                    self.tau[a][b] = self.tau_min # prevents paths from being ignored
 
         # snapshot tau only when a new best is found 
         if improved:
