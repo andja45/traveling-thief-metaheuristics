@@ -6,7 +6,7 @@ from core.ttp_solution import TTPSolution
 
 class BaseSolver(ABC):
     def __init__(self, max_iterations: int = 1000, on_iteration=None,
-                 stagnation_window: int = 100, stagnation_tol: float = 1e-4):
+                 stagnation_window: int = 200, stagnation_tol: float = 1e-4):
         self.max_iterations = max_iterations
         self.on_iteration = on_iteration
         self.stagnation_window = stagnation_window
@@ -78,7 +78,7 @@ class BaseSolver(ABC):
     def _greedy_packing(self, tour = None) -> list[int]:
         n = self.instance.n
 
-        if tour is not None:
+        if tour is not None: # tour aware greedy packing
             remaining = [0.0] * n
             for k in range(n - 2, -1, -1):
                 remaining[k] = remaining[k + 1] + self.instance.distances[tour[k]][tour[k + 1]]
@@ -102,7 +102,6 @@ class BaseSolver(ABC):
                 weight += item.weight
 
         return packing
-
 
     def _pack_iterative(self, tour: list[int], max_passes: int = None,
                         initial_packing: list[int] = None) -> list[int]:
@@ -147,7 +146,6 @@ class BaseSolver(ABC):
 
             for i in range(1, n - 1):
                 for j in range(i + 1, n):
-                    # O(1) TSP delta filter: skip if reversing [i..j] makes tour longer
                     a, b = tour[i - 1], tour[i]
                     c, d = tour[j], tour[(j + 1) % n]
                     if dist[a][c] + dist[b][d] >= dist[a][b] + dist[c][d]:
@@ -195,7 +193,6 @@ class BaseSolver(ABC):
         new_tour[a:b+1] = new_tour[a:b+1][::-1]
         return new_tour
 
-    @staticmethod
     @staticmethod
     def _mutate_pack(packing: list[int], instance) -> list[int]:
         new_pack = packing[:]
