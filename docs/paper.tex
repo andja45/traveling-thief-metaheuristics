@@ -68,7 +68,7 @@ Matija Radulovi\'{c}
 \thispagestyle{empty}
 
 \begin{abstract}
-Problem putuju\'{c}eg lopova (eng. \textit{Travelling Thief Problem}, TTP) je kombinatorni optimizacioni problem koji kombinuje dva klasi\v{c}na NP-te\v{s}ka problema, problem putuju\'{c}eg trgovca i problem ranca, na na\v{c}in koji ova dva podproblema \v{c}ini uzajamno zavisnim. Zbog ove zavisnosti, re\v{s}avanje svakog podproblema nezavisno ne garantuje optimalno re\v{s}enje ukupnog problema. U radu su opisani matematička formulacija TTP-a, referentni skup testnih instanci, pregled relevantnih metaheuristi\v{c}kih pristupa iz literature sa naglaskom na Max-Min sistem mrava (MMAS), simulirano kaljenje (CS2SA) i memetički algoritam (MATLS) kao i naše implementacije sva \v{c}etiri pristupa: ACO, SA, GA i originalna Optimizacija sivim vukovima (GWO). Posebna pa\v{z}nja posve\'{c}ena je diskretnoj adaptaciji GWO algoritma za TTP. Svi algoritmi su testirani na standardnim instancama.
+Problem putuju\'{c}eg lopova (eng. \textit{Travelling Thief Problem}, TTP) je kombinatorni optimizacioni problem koji kombinuje dva klasi\v{c}na NP-te\v{s}ka problema, problem putuju\'{c}eg trgovca i problem ranca, na na\v{c}in koji ova dva podproblema \v{c}ini uzajamno zavisnim. Zbog ove zavisnosti, re\v{s}avanje svakog podproblema nezavisno ne garantuje optimalno re\v{s}enje ukupnog problema. U radu su opisani matematička formulacija TTP-a, pregled relevantnih metaheuristi\v{c}kih pristupa iz literature sa naglaskom na Max-Min sistem mrava (MMAS), simulirano kaljenje (CS2SA) i memetički algoritam (MATLS) kao i naše implementacije sva \v{c}etiri pristupa: ACO, SA, GA i originalna Optimizacija sivim vukovima (GWO). Posebna pa\v{z}nja posve\'{c}ena je diskretnoj adaptaciji GWO algoritma za TTP. Svi algoritmi su testirani na standardnim instancama.
 \end{abstract}
 
 \newpage
@@ -167,7 +167,7 @@ Wagner et al. \cite{wagner_selection} su pokazali da nijedan poznati algoritam n
 
 \subsection{Konstrukcija instanci}
 
-Polyakovskiy i saradnici \cite{polyakovskiy2014} definisali su sveobuhvatni skup od \textbf{9\,720} TTP instanci namenjenih sistematskom poređenju algoritama. Skup je konstruisan kombinovanjem dobro poznatih TSP instanci s dva tipa KP instanci: nekorelisani, nasumi\v{c}no raspore\dj{}eni, i jako korelisani predmeti.
+Polyakovskiy i saradnici \cite{polyakovskiy2014} definisali su sveobuhvatni skup od 9\,720 TTP instanci namenjenih sistematskom poređenju algoritama. Skup je konstruisan kombinovanjem dobro poznatih TSP instanci s dva tipa KP instanci: nekorelisani, nasumi\v{c}no raspore\dj{}eni, i jako korelisani predmeti.
 
 Za svaku TSP instancu, faktor predmeta $F \in \{1, 3, 5, 10\}$ odre\dj{}uje broj predmeta po gradu, a kategorija kapaciteta $C \in \{1, \ldots, 10\}$ veli\v{c}inu ranca. 
 
@@ -186,28 +186,28 @@ Za svaku TSP instancu koristili smo i nekorelisanu ($\texttt{uncorr}$) i jako ko
 
 Polyakovskiy i saradnici \cite{polyakovskiy2014} predlo\v{z}ili su prve tri heuristike za TTP:
 \begin{itemize}
-    \item \textbf{SH} (\textit{Simple Heuristic}): konstruktivna metoda koja za datu rutu (generisanu Chained Lin-Kernighan heuristikom) gradi plan punjenja sortiranjem predmeta po skorovnoj funkciji $s_{ik} = p_{ik} - R \cdot t_{ik}$, gde je $t_{ik}$ doprinos predmeta $k$ ukupnom vremenu puta.
+    \item \textbf{SH} (\textit{Simple Heuristic}): konstruktivna metoda koja za datu rutu (generisanu Chained Lin-Kernighan heuristikom) gradi plan punjenja sortiranjem predmeta po funkciji $s_{ik} = p_{ik} - R \cdot t_{ik}$, gde je $t_{ik}$ doprinos predmeta $k$ ukupnom vremenu puta.
     \item \textbf{RLS} (\textit{Random Local Search}): iterativna metoda koja nasumi\v{c}no menja status jednog predmeta i prihvata pobolj\v{s}anja.
-    \item \textbf{EA} (\textit{Evolutionary Algorithm}, $1+1$): sli\v{c}no RLS-u, ali menja svaki predmet s verovatno\'{c}om $1/m$, omogu\'{c}avaju\'{c}i bijeg iz lokalnih optimuma.
+    \item \textbf{EA} (\textit{Evolutionary Algorithm}, $1+1$): sli\v{c}no RLS-u, ali menja svaki predmet s verovatno\'{c}om $1/m$, omogu\'{c}avaju\'{c}i izlazak iz lokalnih optimuma.
 \end{itemize}
 
 Faulkner i saradnici \cite{faulkner2015} predlo\v{z}ili su niz sofisticiranijih operatora:
 \begin{itemize}
-    \item \textbf{PackIterative}: iterativno poziva pohlepni algoritam punjenja za razli\v{c}ite vrednosti eksponenta u skorovnoj funkciji, te\v{z}e\'{c}i lokalnom optimumu plana punjenja.
+    \item \textbf{PackIterative}: iterativno poziva pohlepni algoritam punjenja za razli\v{c}ite vrednosti eksponenta u funkciji ocene, te\v{z}e\'{c}i lokalnom optimumu plana punjenja.
     \item \textbf{Bitflip}: pohlepni penja\v{c} koji okre\'{c}e bit po bit i zadr\v{z}ava poboljšanje.
-    \item \textbf{Insertion}: operator koji pomi\v{c}e grad na kasniju poziciju u ruti ako to smanjuje troškove no\v{s}enja predmeta skupljenih u tom gradu.
-    \item \textbf{S5}: strategija ponovnog pokretanja---vi\v{s}estruko poziva Chained Lin-Kernighan za razli\v{c}ite po\v{c}etne rute i primenjuje PackIterative. Bez obzira na svoju jednostavnost, S5 ostaje jedan od naj\v{c}e\v{s}\'{c}e kori\v{s}tenih referentnih algoritama za TTP \cite{wagner_selection}.
+    \item \textbf{Insertion}: operator koji pomera grad na kasniju poziciju u ruti ako to smanjuje troškove no\v{s}enja predmeta skupljenih u tom gradu.
+    \item \textbf{S5}: strategija ponovnog pokretanja, vi\v{s}estruko poziva Chained Lin-Kernighan za razli\v{c}ite po\v{c}etne rute i primenjuje PackIterative. Bez obzira na svoju jednostavnost, S5 ostaje jedan od naj\v{c}e\v{s}\'{c}e kori\v{s}cenih referentnih algoritama za TTP.
 \end{itemize}
 
 \subsection{MATLS: memetički algoritam}
 
-Mei i saradnici \cite{mei2014} predlo\v{z}ili su memetički algoritam \textbf{MATLS} koji re\v{s}ava oba podproblema simultano. Klju\v{c}ne karakteristike:
+Mei i saradnici \cite{mei2014} predlo\v{z}ili su memetički algoritam \textbf{MATLS} koji re\v{s}ava oba podproblema u isto vreme. Klju\v{c}ne karakteristike:
 \begin{itemize}
-    \item \textit{EAX ukrštanje} (\textit{Edge Assembly Crossover}): \v{c}uva dobre ivice TSP rute iz oba roditelja prelazeći AB-cikluse genskih nizova, \v{c}ime se zadr\v{z}avaju kvalitetni TSP segmenti.
+    \item \textit{EAX ukrštanje} (\textit{Edge Assembly Crossover}): \v{c}uva dobre ivice TSP rute iz oba roditelja prelazeći AB-cikluse genetskih nizova, \v{c}ime se zadr\v{z}avaju kvalitetni TSP segmenti.
     \item Svaki potomak podvrgava se \textbf{lokalnoj pretrazi} (2-opt + PackIterative), što MATLS svrstava u memetički algoritam.
-    \item Kooperativna koevolucija komparativno je lo\v{s}ija---razmatrane su interdependencije izme\dj{}u podproblema dublje od konkurenata \cite{mei2014}.
+    \item Kooperativna koevolucija
 \end{itemize}
-MATLS nadma\v{s}uje kooperativnu koevoluciju jer eksplicitno razmatra uzajamne zavisnosti, ali zbog intenzivne lokalne pretrage ima visoku ra\v{c}unsku cenu.
+MATLS nadma\v{s}uje kooperativnu koevoluciju, ali zbog intenzivne lokalne pretrage ima visoku ra\v{c}unsku cenu.
 
 \subsection{MMAS-ACO: Max-Min sistem mrava}
 
@@ -236,8 +236,8 @@ Yafrani i Ahiod \cite{yafrani2016} predlo\v{z}ili su \textbf{CS2SA} koji koristi
 
 Svi algoritmi implementovani su u Python-u i nasleđuju klasu \texttt{BaseSolver} koja sadr\v{z}i:
 \begin{itemize}
-    \item \textbf{Pohlepna ruta} (\textit{nearest-neighbour}): gradi rutu po\v{c}ev od zadatog grada, uvek biraju\'{c}i najbli\v{z}i neobi\v{s}eni grad.
-    \item \textbf{Pohlepno punjenje ranca}: za datu rutu, sortira predmete po omeru profit / (te\v{z}ina $\times$ preostalo rastojanje) i pohlepno ih uvrštava sve dok kapacitet nije popunjen. Ovo preslikava uticaj pozicije predmeta u ruti na troškove no\v{s}enja.
+    \item \textbf{Pohlepna ruta} (\textit{nearest-neighbour}): gradi rutu po\v{c}ev od zadatog grada, uvek biraju\'{c}i najbli\v{z}i neobi\dj{}eni grad.
+    \item \textbf{Pohlepno punjenje ranca}: za datu rutu, sortira predmete po oceni profit / (te\v{z}ina $\times$ preostalo rastojanje) i pohlepno ih uvrštava sve dok kapacitet nije popunjen. Ovo preslikava uticaj pozicije predmeta u ruti na troškove no\v{s}enja.
     \item \textbf{PackIterative}: bit-flip lokalna pretraga nad planom punjenja; prolazi svim predmetima i prihvata promene koje pobolj\v{s}avaju vrednost funkcije cilja.
     \item \textbf{2-opt pretraga}: first-improvement 2-opt koji menja preseke rute.
     \item \textbf{Or-opt pretraga}: relokacija segmenata du\v{z}ine 1 i 2 na bolje pozicije u ruti.
@@ -264,13 +264,13 @@ sa parametrima $\alpha = 1$, $\beta = 2$ (heuristi\v{c}ka informacija va\v{z}nij
 \end{equation}
 gde je $C^*$ du\v{z}ina trenutno najboljeg TSP obilaska, $\rho = 0{,}02$ stopa isparavanja, a $p_{\text{best}} = 0{,}05$ ciljana verovatno\'{c}a da mrav konstrui\v{s}e identičnu rutu kao globalno-najboljeg mrova.
 
-\textbf{Deponiranje feromona:} Samo iterativno-najbolji mrav deponuje feromon po deoni\v{c}ama svoje rute: $\Delta\tau = 1 / C_{\text{iter-best}}$.
+\textbf{Deponovanje feromona:} Samo iterativno-najbolji mrav deponuje feromon po deonicama svoje rute: $\Delta\tau = 1 / C_{\text{iter-best}}$.
 
-\textbf{Plan punjenja i pobolj\v{s}anje:} Za svaku konstruisanu rutu, pohlepnim algoritmom generi\v{s}e se plan punjenja. Plan iterativno-najboljeg mrova pobolj\v{s}ava se razmenom predmeta (ispuštanjem predmeta najlo\v{s}ijeg omera profit/te\v{z}ina i dodavanjem najboljeg koji stane).
+\textbf{Plan punjenja i pobolj\v{s}anje:} Za svaku konstruisanu rutu, pohlepnim algoritmom generi\v{s}e se plan punjenja. Plan iterativno-najboljeg mrava pobolj\v{s}ava se razmenom predmeta (ispuštanjem predmeta najlo\v{s}ijeg skora profit/te\v{z}ina i dodavanjem najboljeg koji stane).
 
-\textbf{Stagnacija:} Ako 100 uzastopnih iteracija ne donosi pobolj\v{s}anje, feromonska matrica se resetira na $\tau_{\max}$, forsiraju\'{c}i istra\v{z}ivanje novih deonica.
+\textbf{Stagnacija:} Ako 100 uzastopnih iteracija ne donosi pobolj\v{s}anje, feromonska matrica se resetira na $\tau_{\max}$, forsiraju\'{c}i istra\v{z}ivanje novih puteva.
 
-\textbf{Razlike u odnosu na Wagner (2016):} Wagner koristi Chained Lin-Kernighan (CLK) heuristiku za konstrukciju rute i TSP-specifi\v{c}ne lokalne pretra\v{z}iva\v{c}e (ls3 = 3-opt, ls4 = 4-opt). Na\v{s}a implementacija koristi MMAS feromonski mehanizam za vodstvo konstrukcije rute i jednostavniji swap pobolj\v{s}ava\v{c} plana punjenja. Ovo smanjuje ra\v{c}unsku kompleksnost, ali umanjuje kvalitet ruta u odnosu na CLK.
+\textbf{Razlike u odnosu na Wagner (2016):} Wagner koristi Chained Lin-Kernighan (CLK) heuristiku za konstrukciju rute i TSP-specifi\v{c}ne lokalne pretra\v{z}iva\v{c}e (ls3 = 3-opt, ls4 = 4-opt). Na\v{s}a implementacija koristi MMAS feromonski mehanizam za konstrukcije rute i jednostavniji swap pobolj\v{s}ava\v{c} plana punjenja. Ovo smanjuje ra\v{c}unsku kompleksnost, ali umanjuje kvalitet ruta u odnosu na CLK.
 
 \subsection{Simulirano kaljenje (SA i SAImproved)}
 
@@ -303,7 +303,7 @@ Ova varijanta uvodi vi\v{s}e pobolj\v{s}anja inspirisanih CS2SA \cite{yafrani201
     \end{equation}
 \end{enumerate}
 
-\textbf{Razlike u odnosu na CS2SA:} CS2SA precizno \v{c}uva istoriju promena temperature i primenjuje SA prihvatanje za obe faze. Na\v{s}a implementacija koristi pohlepnu pretragu za rute (bez SA prihvatanja za tour), \v{s}to je konzervativniji pristup ali s manjim rizikom od lo\v{s}ijih poteza u fazi rute.
+\textbf{Razlike u odnosu na CS2SA:} na\v{s}a implementacija koristi pohlepnu pretragu za rute (bez SA prihvatanja za tour), \v{s}to je konzervativniji pristup ali s manjim rizikom od lo\v{s}ijih poteza u fazi rute.
 
 \subsection{Genetički algoritam (GA i GAImproved)}
 
@@ -321,13 +321,13 @@ Populacija veli\v{c}ine 50 inicijalizuje se jednom pohlepnom rutom i 49 nasumi\v
 
 Ova varijanta implementuje slede\'{c}e napredne tehnike:
 \begin{itemize}
-    \item \textbf{Inicijalizacija visoke kvalitete}: svaka od 30 jedinki po\v{c}inje od pohlepne NN rute (iz razli\v{c}itog startnog grada) poja\v{c}ane 2-opt pretragom i PackIterative punjenjem.
-    \item \textbf{EAX ukrštanje} (\textit{Edge Assembly Crossover}): oru\dj{}e za ukrštanje specijalizirano za TSP koje radi u prostoru ivica rute, a ne pozicija. Identifikuje AB-cikluse---minimalne skupove ivica \v{c}ijom zamenom se gradi potomak koji nasle\dj{}uje dobre segmente rute od oba roditelja. Implementirali smo EAX od po\v{c}etka, uklju\v{c}uju\'{c}i fazu spajanja subtours pohlepnim pristupom.
+    \item \textbf{Inicijalizacija visokog kvaliteta}: svaka od 30 jedinki po\v{c}inje od pohlepne NN rute (iz razli\v{c}itog startnog grada) poja\v{c}ane 2-opt pretragom i PackIterative punjenjem.
+    \item \textbf{EAX ukrštanje} (\textit{Edge Assembly Crossover}): oru\dj{}e za ukrštanje specijalizirano za TSP koje radi u prostoru ivica rute, a ne pozicija. Identifikuje AB-cikluse minimalne skupove ivica \v{c}ijom zamenom se gradi potomak koji nasle\dj{}uje dobre segmente rute od oba roditelja. Implementirali smo EAX od po\v{c}etka, uklju\v{c}uju\'{c}i fazu spajanja subtours pohlepnim pristupom.
     \item \textbf{Memetička lokalna pretraga}: svaki potomak podvrgava se 2-opt i or-opt pretragama za rutu, te pohlepnom punjenju i PackIterative za plan punjenja.
     \item \textbf{Stacionarno zamenjivanje} (\textit{steady-state}): samo jedna jedinka po iteraciji zamenjena je najslabijom, \v{c}ime se o\v{c}uvava raznolikost populacije.
 \end{itemize}
 
-\textbf{Razlike u odnosu na MATLS:} MATLS koristi CLK za generisanje po\v{c}etnih ruta i ima slo\v{z}enije upravljanje populacijom. Na\v{s}a implementacija koristi NN + 2-opt kao aproksimaciju CLK-a. Bit-flip lokalna pretraga (PackIterative) je simplifikacija Faulkner-ovog alpha-parametrizovanog PackIterative-a.
+\textbf{Razlike u odnosu na MATLS:} MATLS koristi CLK za generisanje po\v{c}etnih ruta i ima slo\v{z}enije upravljanje populacijom. Na\v{s}a implementacija koristi NN + 2-opt kao aproksimaciju CLK-a. Bit-flip lokalna pretraga (PackIterative) je simplifikacija Faulkner-ovog.
 
 \subsection{Optimizacija sivim vukovima (GWO)}
 
