@@ -1,2 +1,2 @@
 # traveling-thief-metaheuristics
-Metaheuristic solver for the Traveling Thief Problem — GWO, ACO, SA, GA
+Metaheuristic solver for the Traveling Thief Problem - GWO, ACO, SA, GA
