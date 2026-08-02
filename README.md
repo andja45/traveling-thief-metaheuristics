@@ -64,6 +64,14 @@ MMAS (Max-Min Ant System) variant with adaptive pheromone bounds, stagnation rec
 | **η (heuristic)** | Inverse edge distance `1/d(i,j)` - standard attractiveness, independent of packing |
 | **Local search** | 1-pass 2-opt on tour + 3-pass iterative bit-flip on packing, applied to iteration-best ant only |
 
+### ACO (Improved) - Adaptive Evaporation Control
+
+| Feature | Design decision |
+|---|---|
+| **τ bounds seeding** | Random reference tour instead of greedy - a greedy tour's cost is already close to optimal, a poor "how bad can it get" baseline for τ_max |
+| **Evaporation rate** | Reacts to the stagnation counter instead of staying fixed - grows up to 3x the base rate at full stagnation, clearing pheromone faster to push exploration |
+| **Deposit schedule** | Switches to global-best once stagnation passes 50% of the limit, instead of a fixed iteration count - reacts to whether the search is actually stuck |
+
 ### GWO - Grey Wolf Optimizer
 
 Discrete adaptation of GWO for combined permutation (tour) + binary (packing) solution spaces.
@@ -135,28 +143,30 @@ Discrete adaptation of GWO for combined permutation (tour) + binary (packing) so
 |---|---|---|---|---|
 | Brute Force | 115.23 | n/a | n/a | 0.25 |
 | SA Improved | 115.23 | 115.23 | 115.23 | 0.42 |
-| ACO (MMAS) | 115.23 | 115.23 | 115.23 | 0.09 |
+| ACO (MMAS) | 115.23 | 115.23 | 115.23 | 0.13 |
+| ACO Improved | 115.23 | 115.23 | 115.23 | 0.16 |
 | SA | 115.23 | 111.53 | 108.95 | 0.11 |
 | GA | 110.40 | 109.91 | 108.95 | 0.30 |
 | GWO | 110.40 | 90.44 | 50.54 | 0.03 |
 | GA Improved | 101.70 | 101.70 | 101.70 | 0.09 |
 | S5 | 65.78 | 65.78 | 65.78 | 0.00 |
 
-SA Improved and ACO hit the optimal on every run. GWO has high variance; the discrete operators struggle to capture fine TTP structure. GA Improved underperforms basic GA on tiny instances - EAX overhead and steady-state replacement favour larger instances.
+SA Improved, ACO, and ACO Improved hit the optimal on every run. GWO has high variance; the discrete operators struggle to capture fine TTP structure. GA Improved underperforms basic GA on tiny instances - EAX overhead and steady-state replacement favour larger instances.
 
 **eil51** (n=51, m=50, bounded-strongly-corr), 3 runs.
 
 | Algorithm | Best | Mean | Worst | Time (s) |
 |---|---|---|---|---|
 | GA Improved | 4269.21 | 4008.98 | 3806.57 | 41.45 |
+| ACO Improved | 4141.69 | 3967.66 | 3771.00 | 33.77 |
 | SA Improved | 4000.40 | 3891.81 | 3763.49 | 6.79 |
-| ACO (MMAS) | 3819.45 | 3668.63 | 3582.68 | 10.07 |
+| ACO (MMAS) | 3962.27 | 3930.18 | 3903.62 | 52.75 |
 | GA | 3377.68 | 2954.05 | 2667.50 | 0.71 |
 | SA | 2939.51 | 2845.65 | 2797.78 | 0.19 |
 | GWO | 2867.72 | 2775.44 | 2640.54 | 0.87 |
 | S5 | 2575.12 | 2575.12 | 2575.12 | 0.00 |
 
-GA Improved is the clear winner on larger instances - EAX crossover and local search on every offspring pay off at scale. SA Improved is the best quality/runtime tradeoff (4000 best in under 7s). GWO and basic GA fall significantly behind.
+GA Improved is the clear winner on larger instances - EAX crossover and local search on every offspring pay off at scale. ACO Improved lands a close second, ahead of SA Improved, and the adaptive evaporation control also lifts the plain ACO (MMAS) run above its fixed-schedule baseline. SA Improved remains the best quality/runtime tradeoff (4000 best in under 7s). GWO and basic GA/SA fall significantly behind.
 
 Full results across all instances and algorithms: [`results/all.csv`](results/all.csv)  
 Convergence plots, per-instance comparisons, and algorithm analysis: [`docs/notebook.ipynb`](docs/notebook.ipynb)  
@@ -193,6 +203,7 @@ solvers/
   base_solver.py        # shared: greedy tour/packing, 2-opt, OR-opt,
                         #         OX crossover, iterative bit-flip, capacity repair
   aco_solver.py
+  aco_improved_solver.py
   gwo_solver.py
   ga_solver.py
   ga_improved_solver.py
@@ -202,6 +213,8 @@ solvers/
 
 visuals/
   convergence.py        # convergence curve generation
+  tour_map.py           # tour + weight/profit plots
+  animations.py         # pheromone, tour, and weight/profit animations
 
 docs/
   notebook.ipynb        # full analysis: score tables, convergence plots, comparison
