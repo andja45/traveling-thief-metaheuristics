@@ -54,7 +54,7 @@ Deterministic, no iterations. Nearest-neighbor tour → greedy packing by `profi
 
 ### ACO - Ant Colony Optimization
 
-MMAS (Max-Min Ant System) variant with adaptive pheromone bounds, stagnation recovery, and a deposit schedule that transitions from exploration to exploitation mid-run.
+MMAS (Max-Min Ant System) variant with pheromone bounds recalculated on each improvement, stagnation recovery, and a deposit schedule that transitions from exploration to exploitation mid-run.
 
 | Feature | Design decision |
 |---|---|
@@ -166,7 +166,7 @@ SA Improved, ACO, and ACO Improved hit the optimal on every run. GWO has high va
 | GWO | 2867.72 | 2775.44 | 2640.54 | 0.87 |
 | S5 | 2575.12 | 2575.12 | 2575.12 | 0.00 |
 
-GA Improved is the clear winner on larger instances - EAX crossover and local search on every offspring pay off at scale. ACO Improved lands a close second, ahead of SA Improved, and the adaptive evaporation control also lifts the plain ACO (MMAS) run above its fixed-schedule baseline. SA Improved remains the best quality/runtime tradeoff (4000 best in under 7s). GWO and basic GA/SA fall significantly behind.
+GA Improved is the clear winner on larger instances - EAX crossover and local search on every offspring pay off at scale. ACO Improved lands a close second, ahead of SA Improved. SA Improved remains the best quality/runtime tradeoff (4000 best in under 7s). GWO and basic GA/SA fall significantly behind.
 
 Full results across all instances and algorithms: [`results/all.csv`](results/all.csv)  
 Convergence plots, per-instance comparisons, and algorithm analysis: [`docs/notebook.ipynb`](docs/notebook.ipynb)  
