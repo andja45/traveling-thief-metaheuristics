@@ -2,6 +2,7 @@ import csv
 import os
 from core.ttp_loader import load_instance
 from solvers.aco_solver import ACOSolver
+from solvers.aco_improved_solver import ACOImproved
 from solvers.gwo_solver import GWOSolver
 from solvers.ga_solver import GA
 from solvers.ga_improved_solver import GAImproved
@@ -24,6 +25,7 @@ INSTANCES = {
 
 SOLVERS = {
     "ACO": lambda: ACOSolver(max_iterations=500),
+    "ACOImproved": lambda: ACOImproved(max_iterations=500),
     "GWO": lambda: GWOSolver(max_iterations=500),
     "GA": lambda: GA(max_iterations=500),
     "GAImproved": lambda: GAImproved(max_iterations=500),
@@ -42,6 +44,10 @@ with open("results/all.csv", "w", newline="") as f:
     writer.writerow(["algo", "instance", "run", "score", "runtime"])
 
     for inst_name, inst_path in INSTANCES.items():
+        if inst_name.startswith("rat195"):
+            print(f"\nSkipping {inst_name} (too large for a default run, test manually)")
+            continue
+
         instance = load_instance(inst_path)
         print(f"\n=== {inst_name} ===")
 
