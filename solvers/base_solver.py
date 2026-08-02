@@ -74,7 +74,17 @@ class BaseSolver(ABC):
         total = sum(self.instance.distances[tour[i]][tour[i + 1]] for i in range(len(tour) - 1))
         total += self.instance.distances[tour[-1]][tour[0]]
         return total
-        
+
+    def _random_tour_cost(self) -> float:
+        # greedy tour is already near-optimal, bad reference point for tau_max
+        n = self.instance.n
+        tour = list(range(n))
+        random.shuffle(tour)
+        return sum(
+            self.instance.distances[tour[k]][tour[(k + 1) % n]]
+            for k in range(n)
+        )
+
     def _greedy_packing(self, tour = None) -> list[int]:
         n = self.instance.n
 

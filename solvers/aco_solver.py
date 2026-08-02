@@ -15,7 +15,7 @@ class ACOSolver(BaseSolver):
         self.p_best = p_best # prob of reconstructing the best tour 
 
     def _update_tau_bounds(self, best_tour_cost: float):
-        self.tau_max = 1.0 / (self.rho * best_tour_cost) # pheromone added 1/greedy_cost = pheromone removed rho * tau - stable here
+        self.tau_max = 1.0 / (self.rho * best_tour_cost) # pheromone added 1/ref_cost = pheromone removed rho * tau - stable here
 
         p = self.p_best ** (1.0 / self.instance.n) # probabilty of taking the same road - p^n = pbest
         avg = self.instance.n / 2 # estimate of unvisited cities per step
@@ -68,7 +68,7 @@ class ACOSolver(BaseSolver):
         self._start_time = time.time()
         self._stagnation_count = 0  # iterations without improvement
 
-        self._update_tau_bounds(self._greedy_tour_cost())
+        self._update_tau_bounds(self._random_tour_cost())
 
         self.tau = [[self.tau_max] * instance.n for _ in range(instance.n)] # make all edges equally attractive (initialize to tau_max)
         # eta is heuristic attractiveness of edge - we use item density aware eta 
