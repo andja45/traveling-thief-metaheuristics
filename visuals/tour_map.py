@@ -2,15 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from collections import defaultdict
 from core.ttp_evaluator import TTPEvaluator
-
-
-def _normalize_tour(tour):
-    idx = tour.index(0)
-    return tour[idx:] + tour[:idx]
+from visuals import normalize_tour
 
 
 def plot_tour(instance, result, ax=None, title="Best Tour"):
-    tour = _normalize_tour(result.solution.tour)
+    tour = normalize_tour(result.solution.tour)
     packing = result.solution.packing
     cities = instance.cities
 

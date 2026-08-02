@@ -2,15 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.ticker as ticker
-
-def _normalize_tour(tour):
-    idx = tour.index(0)
-    return tour[idx:] + tour[:idx]
+from visuals import normalize_tour
 
 
 def animate_tour(instance, result, interval=100):
     # draws the tour edge by edge
-    tour = _normalize_tour(result.solution.tour)
+    tour = normalize_tour(result.solution.tour)
     cities = instance.cities
     n = len(tour)
 
