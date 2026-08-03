@@ -251,6 +251,8 @@ cd docs && jupyter notebook notebook.ipynb
 
 ---
 
-## Authors
+## Contributions
 
-[Andjela Spasic](https://github.com/andja45) · [Matija Radulović](https://github.com/MatijaRadulovic)
+**My work:** ACO (MMAS) and ACO Improved, GWO; core problem representation (`TTPInstance`, loader, evaluator, solution); `BaseSolver` class design (solve loop, stagnation stopping, greedy tour and tour-aware packing helpers); convergence and pheromone animations, main benchmark runner, README.
+
+**[@MatijaRadulovic](https://github.com/MatijaRadulovic):** shared local search methods in `BaseSolver` (2-opt, OR-opt, iterative bit-flip, capacity repair), Brute Force, S5, GA and GA Improved (EAX crossover), SA and SA Improved (adaptive T₀ calibration), tour map visualizations, notebook analysis.
