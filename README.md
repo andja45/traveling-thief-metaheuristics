@@ -1,14 +1,14 @@
 # Traveling Thief Problem - Metaheuristic Comparison
 
-Comparative study of four metaheuristics (ACO, GWO, GA, SA) and their improved variants on the Traveling Thief Problem - a bi-component NP-hard problem where TSP routing and 0/1 Knapsack selection are coupled through a shared weight-dependent speed objective.
+Comparative study of four metaheuristics (ACO, GWO, GA, SA) and their improved variants on the Traveling Thief Problem - an NP-hard problem where TSP routing and 0/1 Knapsack selection are combined through a shared objective.
 
 **Tech focus:**  
-Python 3 · NumPy · Matplotlib · Jupyter
+Python 3 · NumPy · pandas · Matplotlib · Jupyter
 
 **Algorithm focus:**  
-Ant Colony Optimization · Grey Wolf Optimizer · Genetic Algorithm (EAX) · Simulated Annealing · Nature-Inspired Optimization · Combinatorial Optimization
+Ant Colony Optimization (MMAS) · Grey Wolf Optimizer · Genetic Algorithm (EAX) · Simulated Annealing
 
----
+![Convergence comparison, all 7 iterative solvers, mean ± std over 10 runs](results/convergence_comparison.png)
 
 ## Problem
 
@@ -31,7 +31,48 @@ total_time = Σ distance(city_i → city_{i+1}) / speed(weight_at_city_i)
 
 Items are collected at each city en route, so weight (and therefore speed) is tour-order-dependent.
 
----
+## Results
+
+All tables come from [`results/all.csv`](results/all.csv) (`python main.py`: 1000 iterations, 10 runs per solver per instance).
+
+**tiny7** (n=7, m=6), 10 runs. Brute force optimal = **115.23**.
+
+| Algorithm | Best | Mean | Worst | Time (s) |
+|---|---|---|---|---|
+| Brute Force | 115.23 | n/a | n/a | 0.25 |
+| ACO (MMAS) | 115.23 | 115.23 | 115.23 | 0.06 |
+| ACO Improved | 115.23 | 115.23 | 115.23 | 0.06 |
+| GA Improved | 115.23 | 115.23 | 115.23 | 0.03 |
+| SA Improved | 115.23 | 115.23 | 115.23 | 0.26 |
+| SA | 115.23 | 113.78 | 110.40 | 0.11 |
+| GA | 115.23 | 112.53 | 108.95 | 0.27 |
+| GWO | 115.23 | 84.63 | 54.85 | 0.03 |
+| S5 | 65.78 | 65.78 | 65.78 | 0.00 |
+
+ACO (MMAS), ACO Improved, GA Improved and SA Improved hit the optimum on every run. GWO has the widest spread (best 115.23, worst 54.85).
+
+**eil51** (n=51, m=50, bounded-strongly-corr), 10 runs.
+
+| Algorithm | Best | Mean | Worst | Time (s) |
+|---|---|---|---|---|
+| ACO Improved | 4269.21 | 4174.80 | 3953.90 | 19.11 |
+| GA Improved | 4229.86 | 3872.61 | 3663.72 | 0.88 |
+| SA Improved | 4071.62 | 3884.68 | 3578.19 | 10.26 |
+| ACO (MMAS) | 3874.41 | 3709.46 | 3545.06 | 12.65 |
+| GA | 3810.06 | 2961.64 | 2534.88 | 1.40 |
+| SA | 3309.23 | 2847.39 | 2457.66 | 0.27 |
+| GWO | 2892.01 | 2798.28 | 2725.46 | 1.18 |
+| S5 | 2575.12 | 2575.12 | 2575.12 | 0.00 |
+
+ACO Improved scores highest here, with GA Improved close behind. ACO (MMAS) is the strongest of the un-improved algorithms, ahead of GA, GWO and SA. GWO and basic GA/SA fall well behind the Improved trio.
+
+**Best solution found** (eil51, bounded-strongly-corr) - the route the thief actually walks, plus how much weight it's carrying and how much profit it's banked along the way:
+
+![Best tour and weight/profit trace, eil51 bounded-strongly-corr](results/best_tour_eil51.png)
+
+Full results across all instances and algorithms: [`results/all.csv`](results/all.csv)  
+Convergence plots, per-instance comparisons, and algorithm analysis: [`docs/notebook.ipynb`](docs/notebook.ipynb)  
+Project documentation: [`docs/document.pdf`](docs/document.pdf) · Presentation: [`docs/presentation.pdf`](docs/presentation.pdf)
 
 ## Solvers
 
@@ -41,8 +82,8 @@ All solvers share a `BaseSolver` base class. Subclasses implement `_initialize()
 |---|---|
 | `_greedy_packing` | Tour-aware greedy packing, scores items by `profit / (weight × remaining_distance)` |
 | `_pack_iterative` | Multi-pass bit-flip local search on the packing vector |
-| `_two_opt_full` | 2-opt that evaluates the full TTP objective, not just tour distance |
-| `_or_opt_full` | OR-opt with segments of length 1 and 2 |
+| `_two_opt_full` | 2-opt evaluating the full TTP objective, not just tour distance - a cheap distance-only check skips candidates that can't shorten the tour before paying for the full evaluation |
+| `_or_opt_full` | OR-opt with segments of length 1 and 2, same cheap distance pre-filter as `_two_opt_full` before the full evaluation |
 
 ### Brute Force
 
@@ -121,58 +162,15 @@ Discrete adaptation of GWO for combined permutation (tour) + binary (packing) so
 | **Warm start** | Greedy tour → 2-opt → OR-opt → iterative packing before first iteration |
 | **Batch moves** | `n/2` tour proposals (greedy accept) + `m/2` packing flips (SA acceptance) per cooling step |
 
----
-
 ## Failure Modes and Recovery
 
 **Pheromone stagnation (ACO):** Trails converge prematurely, locking the colony into a suboptimal route. After 100 iterations without score improvement, pheromone levels reset to τ_max.
 
 **Constraint violation (GA, GA Improved):** OX crossover preserves tour validity but packing crossover can violate knapsack capacity. Capacity repair removes items in ascending `profit/weight` order until the constraint is satisfied.
 
-**High variance (GWO):** Discrete tour operators struggle to capture fine TTP structure. GWO shows the widest spread across runs (best 110.40, worst 50.54 on tiny7). The discrete adaptation loses the smooth gradients GWO relies on in continuous search spaces.
+**High variance (GWO):** widest spread of any solver (best 115.23, worst 54.85 on tiny7). GWO is built for continuous problems, and we adapted it for a discrete one here - a rougher fit than the other solvers' purpose-built discrete operators.
 
 **Cold-start inefficiency:** SA Improved auto-calibrates T₀ from sampled deltas rather than guessing; GA Improved seeds every individual with a greedy + local-search solution rather than random permutations.
-
----
-
-## Results
-
-**tiny7** (n=7, m=6), 3 runs. Brute force optimal = **115.23**.
-
-| Algorithm | Best | Mean | Worst | Time (s) |
-|---|---|---|---|---|
-| Brute Force | 115.23 | n/a | n/a | 0.25 |
-| SA Improved | 115.23 | 115.23 | 115.23 | 0.42 |
-| ACO (MMAS) | 115.23 | 115.23 | 115.23 | 0.13 |
-| ACO Improved | 115.23 | 115.23 | 115.23 | 0.16 |
-| SA | 115.23 | 111.53 | 108.95 | 0.11 |
-| GA | 110.40 | 109.91 | 108.95 | 0.30 |
-| GWO | 110.40 | 90.44 | 50.54 | 0.03 |
-| GA Improved | 101.70 | 101.70 | 101.70 | 0.09 |
-| S5 | 65.78 | 65.78 | 65.78 | 0.00 |
-
-SA Improved, ACO, and ACO Improved hit the optimal on every run. GWO has high variance; the discrete operators struggle to capture fine TTP structure. GA Improved underperforms basic GA on tiny instances - EAX overhead and steady-state replacement favour larger instances.
-
-**eil51** (n=51, m=50, bounded-strongly-corr), 3 runs.
-
-| Algorithm | Best | Mean | Worst | Time (s) |
-|---|---|---|---|---|
-| GA Improved | 4269.21 | 4008.98 | 3806.57 | 41.45 |
-| ACO Improved | 4141.69 | 3967.66 | 3771.00 | 33.77 |
-| SA Improved | 4000.40 | 3891.81 | 3763.49 | 6.79 |
-| ACO (MMAS) | 3962.27 | 3930.18 | 3903.62 | 52.75 |
-| GA | 3377.68 | 2954.05 | 2667.50 | 0.71 |
-| SA | 2939.51 | 2845.65 | 2797.78 | 0.19 |
-| GWO | 2867.72 | 2775.44 | 2640.54 | 0.87 |
-| S5 | 2575.12 | 2575.12 | 2575.12 | 0.00 |
-
-GA Improved is the clear winner on larger instances - EAX crossover and local search on every offspring pay off at scale. ACO Improved lands a close second, ahead of SA Improved. SA Improved remains the best quality/runtime tradeoff (4000 best in under 7s). GWO and basic GA/SA fall significantly behind.
-
-Full results across all instances and algorithms: [`results/all.csv`](results/all.csv)  
-Convergence plots, per-instance comparisons, and algorithm analysis: [`docs/notebook.ipynb`](docs/notebook.ipynb)  
-Project documentation: [`docs/document.pdf`](docs/document.pdf) · Presentation: [`docs/presentation.pdf`](docs/presentation.pdf)
-
----
 
 ## Benchmark Instances
 
@@ -187,8 +185,6 @@ Project documentation: [`docs/document.pdf`](docs/document.pdf) · Presentation:
 | pr76 | 76 | 75 | bounded-strongly-corr |
 | rat195 | 195 | 194 | uncorrelated |
 | rat195 | 195 | 194 | bounded-strongly-corr |
-
----
 
 ## Architecture
 
@@ -212,7 +208,7 @@ solvers/
   s5_solver.py          # greedy construction baseline
 
 visuals/
-  convergence.py        # convergence curve generation
+  convergence.py        # convergence curves (per run, and mean ± std comparison)
   tour_map.py           # tour + weight/profit plots
   animations.py         # pheromone, tour, and weight/profit animations
 
@@ -222,10 +218,8 @@ docs/
   presentation.pdf / .tex
 
 benchmarks/             # .ttp instance files
-results/                # all.csv, convergence_raw.png
+results/                # all.csv, figures (convergence, best tour), GIFs
 ```
-
----
 
 ## Run
 
@@ -239,8 +233,6 @@ Full analysis with plots and comparisons:
 cd docs && jupyter notebook notebook.ipynb
 ```
 
----
-
 ## References
 
 - Bonyadi, Michalewicz, Barone. *The Travelling Thief Problem*. IEEE CEC 2013.
@@ -249,10 +241,10 @@ cd docs && jupyter notebook notebook.ipynb
 - Mirjalili et al. *Grey Wolf Optimizer*. Advances in Engineering Software 2014.
 - Kirkpatrick et al. *Optimization by Simulated Annealing*. Science 1983.
 
----
-
 ## Contributions
 
 **My work:** ACO (MMAS) and ACO Improved, GWO; core problem representation (`TTPInstance`, loader, evaluator, solution); `BaseSolver` class design (solve loop, stagnation stopping, greedy tour and tour-aware packing helpers); convergence and pheromone animations, main benchmark runner, README.
 
-**[@MatijaRadulovic](https://github.com/MatijaRadulovic):** shared local search methods in `BaseSolver` (2-opt, OR-opt, iterative bit-flip, capacity repair), Brute Force, S5, GA and GA Improved (EAX crossover), SA and SA Improved (adaptive T₀ calibration), tour map visualizations, notebook analysis.
+**[@MatijaRadulovic](https://github.com/MatijaRadulovic):** 2-opt, OR-opt, iterative bit-flip methods in `BaseSolver`, Brute Force, S5, GA and GA Improved, SA and SA Improved.
+
+`docs/notebook.ipynb` analysis, `docs/document.pdf`, and `docs/presentation.pdf` were done in collaboration.
