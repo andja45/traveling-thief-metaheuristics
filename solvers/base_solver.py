@@ -175,6 +175,7 @@ class BaseSolver(ABC):
     def _or_opt_full(self, tour: list[int], packing: list[int],
                      max_passes: int = None) -> list[int]:
         n = self.instance.n
+        dist = self.instance.distances
         passes = 0
         improved = True
         while improved and (max_passes is None or passes < max_passes):
@@ -185,9 +186,15 @@ class BaseSolver(ABC):
                 for i in range(n - seg_len + 1):
                     segment = tour[i:i + seg_len]
                     remaining = tour[:i] + tour[i + seg_len:]
-                    for j in range(len(remaining) + 1):
+                    p, q = tour[i - 1], tour[(i + seg_len) % n]
+                    s0, sL = segment[0], segment[-1]
+                    m = len(remaining)
+                    for j in range(m + 1):
                         if j == i:
                             continue
+                        u, v = remaining[j - 1], remaining[j % m]
+                        if dist[p][q] + dist[u][s0] + dist[sL][v] >= dist[p][s0] + dist[sL][q] + dist[u][v]:
+                            continue  
                         new_tour = remaining[:j] + segment + remaining[j:]
                         score = self.evaluator.evaluate(TTPSolution(tour=new_tour, packing=packing))
                         if score > best_score:
